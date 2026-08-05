@@ -1,0 +1,20 @@
+html, body { margin: 0; padding: 0; background: #F4F5F7; }
+* { box-sizing: border-box; }
+a { color: #E4002B; text-decoration: none; }
+a:hover { color: #B80022; }
+input, select, button { font-family: 'Manrope', sans-serif; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+/* hover utility classes, mirroring the original style-hover attributes */
+.hov-bell:hover { background: #FDECEF; border-color: #F5C6D0; }
+.hov-notif-row:hover { background: #F4F5F7; }
+.hov-tile:hover { box-shadow: 0 10px 24px rgba(20, 22, 26, 0.08); transform: translateY(-2px); }
+.hov-icon-btn:hover { background: #FDECEF; }
+.hov-red-btn:hover { background: #B80022; }
+.hov-table-row:hover { background: #FAFBFC; }
+.hov-outline-red:hover { background: #FDECEF; border-color: #F5C6D0; color: #E4002B; }
+.hov-cancel-text:hover { color: #14161A; }
+.hov-gray-btn:hover { background: #F4F5F7; }
+.hov-green-btn:hover { background: #0B8A5F; }
