@@ -1,0 +1,129 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design tokens.
+
+   Tailwind v4 turns every entry here into utilities: `--color-brand` gives
+   `bg-brand` / `text-brand` / `border-brand`, `--radius-card` gives
+   `rounded-card`, and so on. This is the whole theme — there is no
+   tailwind.config.js and no per-component stylesheet.
+   ------------------------------------------------------------------------- */
+
+@theme {
+  /* Brand */
+  --color-brand: #e4002b;
+  --color-brand-dark: #b80022;
+  --color-brand-soft: #fdecef;
+  --color-brand-border: #f5c6d0;
+
+  /* Ink / text */
+  --color-ink: #14161a;
+  --color-ink-900: #191b1f;
+  --color-ink-800: #25282e;
+  --color-body: #5a616b;
+  --color-muted: #8a909a;
+
+  /* Surfaces */
+  --color-canvas: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fafbfc;
+  --color-line: #eceef1;
+  --color-line-strong: #d8dbe0;
+
+  /* Status */
+  --color-success: #0e9f6e;
+  --color-success-dark: #0b8a5f;
+  --color-success-soft: #e7f6ef;
+  --color-mint: #3ddc97;
+  --color-mint-line: #b9e8d4;
+  --color-warn: #c77700;
+  --color-warn-soft: #fff4e5;
+
+  /* Typography — Manrope for UI, Space Grotesk for figures */
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'Space Grotesk', 'Manrope', sans-serif;
+
+  /* Radii, named for what they wrap */
+  --radius-chip: 9px;
+  --radius-control: 11px;
+  --radius-field: 14px;
+  --radius-card: 18px;
+  --radius-panel: 20px;
+
+  /* Shadows */
+  --shadow-brand: 0 8px 16px rgb(228 0 43 / 0.28);
+  --shadow-tile: 0 10px 24px rgb(20 22 26 / 0.08);
+  --shadow-pop: 0 16px 40px rgb(20 22 26 / 0.12);
+  --shadow-toast: 0 16px 40px rgb(20 22 26 / 0.3);
+
+  /* Animations */
+  --animate-fade-up: fade-up 0.25s ease;
+  --animate-pop: pop 0.15s ease;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+
+@layer base {
+  html,
+  body {
+    @apply m-0 bg-canvas p-0;
+  }
+
+  body {
+    @apply font-sans text-ink antialiased;
+  }
+
+  a {
+    @apply text-brand no-underline hover:text-brand-dark;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply m-0;
+  }
+
+  /* Chrome/Safari draw spinners on number inputs that break the field layout. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    @apply m-0 appearance-none;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

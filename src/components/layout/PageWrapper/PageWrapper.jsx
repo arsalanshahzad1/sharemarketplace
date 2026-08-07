@@ -1,0 +1,46 @@
+import { useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import Navbar from "@/components/layout/Navbar/Navbar";
+// import Footer from "@/components/layout/Footer/Footer";
+import Toast from "@/components/common/Toast/Toast";
+import { useI18n } from "@/context/I18nContext";
+import { cx } from "@/utils/cx";
+import {
+  marketplaceActions,
+  useMarketplaceStore,
+} from "@/features/marketplace/marketplaceStore";
+
+export default function PageWrapper() {
+  const { tm } = useI18n();
+  const toast = useMarketplaceStore((state) => state.toast);
+
+  useEffect(() => {
+    marketplaceActions.load();
+  }, []);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-canvas text-ink">
+      <Navbar />
+      <main className="mx-auto w-full max-w-[1240px] flex-1 px-4 pb-12 pt-5 sm:px-7 sm:pb-16 sm:pt-7">
+        <Outlet />
+      </main>
+      {/* <Footer /> */}
+      <Toast>{tm(toast)}</Toast>
+    </div>
+  );
+}
+
+export function Page({ width = "full", className, children }) {
+  return (
+    <div
+      className={cx(
+        "animate-fade-up",
+        width === "narrow" && "mx-auto max-w-[640px]",
+        width === "medium" && "mx-auto max-w-[920px]",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
