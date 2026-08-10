@@ -12,14 +12,6 @@ import PaymentSuccess from '@/pages/PaymentSuccess/PaymentSuccess';
 import Transactions from '@/pages/Transactions/Transactions';
 import NotFound from '@/pages/NotFound/NotFound';
 
-/**
- * Route table. Every screen sits inside `PageWrapper`, which supplies the nav,
- * footer and toast layer.
- *
- * Marketplace routes are open in this build — the registry demo signs the user
- * in automatically. Wrapping them in `<Route element={<ProtectedRoute />}>` is
- * all that is needed once a real login exists.
- */
 export default function AppRoutes() {
   return (
     <Routes>
