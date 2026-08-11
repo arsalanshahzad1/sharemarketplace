@@ -19,6 +19,12 @@ export default function ActivityFeed({ items, onViewAll }) {
         </button>
       </div>
 
+      {items.length === 0 && (
+        <div className="border-t border-canvas py-8 text-center text-[13.5px] font-bold text-muted">
+          No marketplace activity yet.
+        </div>
+      )}
+
       {items.map((item) => (
         <div
           key={item.id}

@@ -14,29 +14,36 @@ import { Page } from '@/components/layout/PageWrapper/PageWrapper';
 import { useI18n } from '@/context/I18nContext';
 import { ROUTES } from '@/constants';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { formatShortDate } from '@/utils/formatDate';
 import { useMarketplace } from '@/features/marketplace/hooks';
 import { ActivityFeed, StatCard } from '@/features/marketplace/components';
 import {
   selectEstimatedValue,
+  selectLastTradePrice,
+  selectLiveListings,
   selectOpenOfferCount,
+  selectRecentActivity,
   selectSharesForSale,
+  selectVolume30d,
 } from '@/features/marketplace/marketplaceSelectors';
-import {
-  activityFixture,
-  marketStatsFixture,
-} from '@/features/marketplace/marketplaceFixtures';
 
 const HERO_LABEL = 'text-[11.5px] font-extrabold uppercase tracking-[0.05em] text-white/55';
 
-/** Marketplace overview: portfolio, market stats, shortcuts and recent activity. */
 export default function Home() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const state = useMarketplace();
 
   const sharesForSale = selectSharesForSale(state);
+  const liveListings = selectLiveListings(state);
   const estimatedValue = selectEstimatedValue(state);
   const openOffers = selectOpenOfferCount(state);
+  const lastTradePrice = selectLastTradePrice(state);
+  const volume30d = selectVolume30d(state);
+  const recentActivity = selectRecentActivity(state).map((item) => ({
+    ...item,
+    time: item.time ? formatShortDate(item.time, lang) : '',
+  }));
 
   const tiles = [
     {
@@ -69,11 +76,7 @@ export default function Home() {
   return (
     <Page>
       <div className="grid grid-cols-1 gap-4 min-[620px]:grid-cols-2 min-[1080px]:grid-cols-[1.35fr_1fr_1fr_1fr]">
-        <Card
-          inverse
-          padding="none"
-          className="flex flex-col justify-between p-[26px]"
-        >
+        <Card inverse padding="none" className="flex flex-col justify-between p-[26px]">
           <div>
             <div className={HERO_LABEL}>{t('myShares')}</div>
             <div className="mt-1.5 font-mono text-4xl font-bold tracking-[-0.01em] tabular-nums min-[620px]:text-[44px]">
@@ -95,25 +98,25 @@ export default function Home() {
         <StatCard
           label={t('lastPrice')}
           icon={<TrendUpIcon size={15} />}
-          value={formatCurrency(marketStatsFixture.lastPrice)}
+          value={formatCurrency(lastTradePrice)}
           trend={{
-            label: `+${marketStatsFixture.changePct}%`,
-            chart: <Sparkline points={marketStatsFixture.sparkline} />,
+            label: '0%',
+            chart: <Sparkline points="0,12 12,12 24,12 36,12 48,12 60,12 72,12" />,
           }}
         />
 
         <StatCard
           label={t('activeListings')}
           icon={<TagIcon size={15} />}
-          value={state.listings.length}
+          value={liveListings.length}
           meta={t('listingSharesLine', { count: sharesForSale })}
         />
 
         <StatCard
           label={t('vol30')}
           icon={<BarChartIcon size={15} />}
-          value={marketStatsFixture.volume30dShares}
-          meta={`${t('sharesTraded')} · ${marketStatsFixture.volume30dValue}`}
+          value={volume30d.shares}
+          meta={`${t('sharesTraded')} · ${formatCurrency(volume30d.value)}`}
         />
       </div>
 
@@ -147,10 +150,7 @@ export default function Home() {
         ))}
       </div>
 
-      <ActivityFeed
-        items={activityFixture}
-        onViewAll={() => navigate(ROUTES.TRANSACTIONS)}
-      />
+      <ActivityFeed items={recentActivity} onViewAll={() => navigate(ROUTES.TRANSACTIONS)} />
     </Page>
   );
 }

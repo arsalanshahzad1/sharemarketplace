@@ -4,19 +4,46 @@ import Navbar from "@/components/layout/Navbar/Navbar";
 // import Footer from "@/components/layout/Footer/Footer";
 import Toast from "@/components/common/Toast/Toast";
 import { useI18n } from "@/context/I18nContext";
+import { useAuth } from "@/context/AuthContext";
 import { cx } from "@/utils/cx";
 import {
   marketplaceActions,
   useMarketplaceStore,
 } from "@/features/marketplace/marketplaceStore";
+import {
+  connectMarketplaceSocket,
+  disconnectMarketplaceSocket,
+} from "@/services/socket";
 
 export default function PageWrapper() {
   const { tm } = useI18n();
+  const { isAuthenticated } = useAuth();
   const toast = useMarketplaceStore((state) => state.toast);
 
   useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
     marketplaceActions.load();
-  }, []);
+    const socket = connectMarketplaceSocket({
+      onEvent(eventName, payload) {
+        if (eventName === "socket.connected") {
+          marketplaceActions.load({ force: true });
+          return;
+        }
+        if (eventName === "marketplace.connected" || eventName === "socket.error") return;
+        if (eventName.startsWith("offer.")) {
+          if (payload?.thread) marketplaceActions.upsertThread(payload.thread);
+          return;
+        }
+        marketplaceActions.load({ force: true });
+      },
+    });
+
+    return () => {
+      socket?.disconnect();
+      disconnectMarketplaceSocket();
+    };
+  }, [isAuthenticated]);
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">

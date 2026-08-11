@@ -1,9 +1,12 @@
-import { LAST_TRADE_PRICE, THREAD_ROLE, THREAD_STATUS, TX_STATUS } from '@/constants';
+import { THREAD_ROLE, THREAD_STATUS, TX_STATUS } from '@/constants';
 import { ENV } from '@/constants/env';
 
 /** Pure derivations over marketplace state. Components read these, not raw state. */
 
 export const selectListings = (state) => state.listings;
+
+export const selectLiveListings = (state) =>
+  state.listings.filter((listing) => listing.status === 'active' && Number(listing.availableQty ?? listing.qty) > 0);
 
 export const selectListingById = (id) => (state) =>
   state.listings.find((listing) => listing.id === id) ?? null;
@@ -12,12 +15,66 @@ export const selectMyListings = (state) =>
   state.listings.filter((listing) => listing.mine);
 
 export const selectSharesForSale = (state) =>
-  state.listings.reduce((total, listing) => total + listing.qty, 0);
+  selectLiveListings(state).reduce((total, listing) => total + Number(listing.availableQty ?? listing.qty), 0);
 
 export const selectAvailableShares = (state) =>
   Math.max(0, state.myShares - state.reserved);
 
-export const selectEstimatedValue = (state) => state.myShares * LAST_TRADE_PRICE;
+export const selectLastTradePrice = (state) =>
+  state.transactions.find((tx) => tx.status === TX_STATUS.DONE)?.price ??
+  state.listings[0]?.price ??
+  0;
+
+export const selectEstimatedValue = (state) =>
+  state.myShares * selectLastTradePrice(state);
+
+export const selectVolume30d = (state) => {
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+  return state.transactions.reduce(
+    (acc, tx) => {
+      const time = new Date(tx.date).getTime();
+      if (!Number.isFinite(time) || time < cutoff) return acc;
+
+      const shares = Number(tx.qty || 0);
+      const price = Number(tx.price || 0);
+      return {
+        shares: acc.shares + shares,
+        value: acc.value + shares * price,
+      };
+    },
+    { shares: 0, value: 0 },
+  );
+};
+
+export const selectRecentActivity = (state) => {
+  const notifications = state.notifications.slice(0, 5).map((item) => ({
+    id: item.id,
+    icon: "!",
+    tone: item.unread ? "red" : "green",
+    message: item.message,
+    amount: "",
+    time: item.time,
+  }));
+
+  if (notifications.length) return notifications;
+
+  return state.transactions.slice(0, 5).map((tx) => ({
+    id: tx.id,
+    icon: tx.dir === "buy" ? "+" : "$",
+    tone: tx.dir === "buy" ? "green" : "red",
+    message:
+      tx.dir === "buy"
+        ? `Purchased ${tx.qty} shares from ${tx.counterparty}`
+        : `Sold ${tx.qty} shares to ${tx.counterparty}`,
+    amount: new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "MXN",
+    }).format(Number(tx.qty || 0) * Number(tx.price || 0)),
+    positive: tx.dir === "sell",
+    time: tx.date,
+  }));
+};
 
 /** Threads that need the shareholder to do something. */
 export const selectActionableThreads = (state) =>
@@ -68,8 +125,23 @@ export const EVENT_LABEL_KEYS = {
  * Buyer-side order maths. The commission is charged on top of the share value,
  * so the buyer's total exceeds the seller's proceeds by the fee.
  */
-export const calcOrder = (qty, price, feePct = ENV.COMMISSION_PCT) => {
+export const calcOrder = (qty, price, feePct = ENV.COMMISSION_PCT, options = {}) => {
   const subtotal = qty * price;
   const fee = (subtotal * feePct) / 100;
-  return { subtotal, fee, total: subtotal + fee, feePct };
+  const totalBeforeConekta = subtotal + fee;
+  const conektaFeePct = 3;
+  const conektaFee = options.includeConektaFee
+    ? Number(((totalBeforeConekta * conektaFeePct) / 100).toFixed(2))
+    : 0;
+  const total = Number((totalBeforeConekta + conektaFee).toFixed(2));
+
+  return {
+    subtotal,
+    fee,
+    totalBeforeConekta,
+    conektaFee,
+    total,
+    feePct,
+    conektaFeePct,
+  };
 };

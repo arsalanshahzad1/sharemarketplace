@@ -10,7 +10,9 @@ import Offers from '@/pages/Offers/Offers';
 import Payment from '@/pages/Payment/Payment';
 import PaymentSuccess from '@/pages/PaymentSuccess/PaymentSuccess';
 import Transactions from '@/pages/Transactions/Transactions';
+import Login from '@/pages/Login/Login';
 import NotFound from '@/pages/NotFound/NotFound';
+import ProtectedRoute from './ProtectedRoute';
 
 /**
  * Route table. Every screen sits inside `PageWrapper`, which supplies the nav,
@@ -24,15 +26,18 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<PageWrapper />}>
-        <Route path={ROUTES.HOME} element={<Home />} />
-        <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
-        <Route path={ROUTES.BROWSE} element={<Browse />} />
-        <Route path={ROUTES.LISTING} element={<ListingDetail />} />
-        <Route path={ROUTES.SELL} element={<Sell />} />
-        <Route path={ROUTES.OFFERS} element={<Offers />} />
-        <Route path={ROUTES.PAYMENT} element={<Payment />} />
-        <Route path={ROUTES.PAYMENT_SUCCESS} element={<PaymentSuccess />} />
-        <Route path={ROUTES.TRANSACTIONS} element={<Transactions />} />
+        <Route path={ROUTES.LOGIN} element={<Login />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path={ROUTES.HOME} element={<Home />} />
+          <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+          <Route path={ROUTES.BROWSE} element={<Browse />} />
+          <Route path={ROUTES.LISTING} element={<ListingDetail />} />
+          <Route path={ROUTES.SELL} element={<Sell />} />
+          <Route path={ROUTES.OFFERS} element={<Offers />} />
+          <Route path={ROUTES.PAYMENT} element={<Payment />} />
+          <Route path={ROUTES.PAYMENT_SUCCESS} element={<PaymentSuccess />} />
+          <Route path={ROUTES.TRANSACTIONS} element={<Transactions />} />
+        </Route>
         <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
       </Route>
     </Routes>

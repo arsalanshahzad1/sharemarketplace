@@ -7,6 +7,7 @@ import { listingPath } from "@/constants";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { formatShortDate } from "@/utils/formatDate";
 import { cx } from "@/utils/cx";
+import { marketplaceActions } from "../../marketplaceStore";
 
 const ROW =
   "grid min-w-[780px] grid-cols-[2fr_1fr_1.1fr_1.1fr_1.3fr_0.9fr] gap-3 px-[22px]";
@@ -16,6 +17,10 @@ const NUM = "text-right font-mono text-sm font-semibold tabular-nums";
 export default function ListingTable({ listings }) {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+
+  const cancelListing = (listingId) => {
+    marketplaceActions.cancelListing(listingId);
+  };
 
   return (
     <>
@@ -86,9 +91,24 @@ export default function ListingTable({ listings }) {
 
               <div className="text-right">
                 {listing.mine ? (
-                  <span className="text-xs font-extrabold text-muted">
-                    {t("yourListing")}
-                  </span>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-xs font-extrabold text-muted">
+                      {t("yourListing")}
+                    </span>
+                    {listing.status === "payment_pending" ? (
+                      <span className="text-xs font-extrabold text-brand">
+                        {t("awaitingPayment")}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => cancelListing(listing.id)}
+                      >
+                        {t("cancelListing")}
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <Button
                     variant="secondary"

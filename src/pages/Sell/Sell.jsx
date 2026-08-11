@@ -8,13 +8,16 @@ import Input, { Select } from '@/components/common/Input/Input';
 import PageHeader from '@/components/common/PageHeader/PageHeader';
 import { Page } from '@/components/layout/PageWrapper/PageWrapper';
 import { useI18n } from '@/context/I18nContext';
-import { EXPIRY_OPTIONS, LAST_TRADE_PRICE, ROUTES } from '@/constants';
+import { EXPIRY_OPTIONS, ROUTES } from '@/constants';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { toNumber, validateListing } from '@/utils/validators';
 import { cx } from '@/utils/cx';
 import { useMarketplace } from '@/features/marketplace/hooks';
 import { marketplaceActions } from '@/features/marketplace/marketplaceStore';
-import { selectAvailableShares } from '@/features/marketplace/marketplaceSelectors';
+import {
+  selectAvailableShares,
+  selectLastTradePrice,
+} from '@/features/marketplace/marketplaceSelectors';
 import { OrderSummary } from '@/features/marketplace/components';
 
 const STEPS = { DETAILS: 1, REVIEW: 2, PUBLISHED: 3 };
@@ -28,11 +31,12 @@ export default function Sell() {
   const navigate = useNavigate();
   const state = useMarketplace();
   const available = selectAvailableShares(state);
+  const lastTradePrice = selectLastTradePrice(state);
 
   const [step, setStep] = useState(STEPS.DETAILS);
   const [draft, setDraft] = useState({
     qty: 20,
-    price: LAST_TRADE_PRICE,
+    price: lastTradePrice || '',
     allowOffers: true,
     expiry: '14',
   });
@@ -106,7 +110,7 @@ export default function Sell() {
               type="number"
               prefix="MX$"
               value={draft.price}
-              suffix={`${t('lastTrade')} ${formatCurrency(LAST_TRADE_PRICE)}`}
+              suffix={`${t('lastTrade')} ${formatCurrency(lastTradePrice)}`}
               onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))}
             />
 

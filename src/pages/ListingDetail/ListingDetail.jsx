@@ -12,7 +12,7 @@ import { ROUTES } from '@/constants';
 import { ENV } from '@/constants/env';
 import { formatCurrency, percentDelta } from '@/utils/formatCurrency';
 import { formatShortDate } from '@/utils/formatDate';
-import { toNumber, validateOffer } from '@/utils/validators';
+import { toNumber, validatePrice } from '@/utils/validators';
 import { cx } from '@/utils/cx';
 import { useListing } from '@/features/marketplace/hooks';
 import {
@@ -65,8 +65,9 @@ export default function ListingDetail() {
   }
 
   const order = calcOrder(listing.qty, listing.price, ENV.COMMISSION_PCT);
-  const offerTotal = toNumber(offer.price) * toNumber(offer.qty);
-  const askTotal = listing.price * toNumber(offer.qty);
+  const offerQty = listing.qty;
+  const offerTotal = toNumber(offer.price) * offerQty;
+  const askTotal = listing.price * offerQty;
   const delta = percentDelta(offerTotal, askTotal);
 
   const deltaLine =
@@ -87,17 +88,18 @@ export default function ListingDetail() {
   };
 
   const sendOffer = () => {
-    const problem = validateOffer({
-      price: offer.price,
-      qty: offer.qty,
-      maxQty: listing.qty,
-    });
+    if (!listing.allowOffers) {
+      setOffering(false);
+      return;
+    }
+
+    const problem = validatePrice(offer.price);
     if (problem) {
       setError(t(problem));
       return;
     }
     setError(null);
-    marketplaceActions.sendOffer(listing, offer);
+    marketplaceActions.sendOffer(listing, { price: offer.price });
     navigate(ROUTES.OFFERS);
   };
 
@@ -163,7 +165,7 @@ export default function ListingDetail() {
         </Card>
 
         <Card>
-          {offering ? (
+          {offering && listing.allowOffers ? (
             <div className="[&>*+*]:mt-3.5">
               <SectionLabel>{t('makeOffer')}</SectionLabel>
 
@@ -175,16 +177,11 @@ export default function ListingDetail() {
                 onChange={(e) => setOffer((o) => ({ ...o, price: e.target.value }))}
               />
 
-              <Input
-                label={t('offerQty')}
-                type="number"
-                suffix={`${t('max')} ${listing.qty}`}
-                value={offer.qty}
-                onChange={(e) => setOffer((o) => ({ ...o, qty: e.target.value }))}
-                error={error}
-              />
-
               <div>
+                <div className="mb-3 flex justify-between text-[13px] font-bold text-body">
+                  <span>{t('offerQty')}</span>
+                  <span className="font-mono tabular-nums text-ink">{listing.qty}</span>
+                </div>
                 <div className="flex justify-between text-[13px] font-bold text-body">
                   <span>{t('offerTotal')}</span>
                   <span className="font-mono tabular-nums text-ink">

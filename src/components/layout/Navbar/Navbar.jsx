@@ -14,7 +14,7 @@ import {
 
 export default function Navbar() {
   const { t, tm, lang, setLang } = useI18n();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const notifications = useMarketplaceStore((s) => s.notifications);
@@ -138,6 +138,16 @@ export default function Navbar() {
           <Link to={ROUTES.DASHBOARD} aria-label={t("dashboard")}>
             <Avatar self initials={user?.initials ?? "DC"} name={user?.name} />
           </Link>
+
+          {user && (
+            <button
+              type="button"
+              onClick={() => logout().finally(() => navigate(ROUTES.LOGIN))}
+              className="cursor-pointer rounded-control border border-line bg-surface px-3 py-2 text-xs font-extrabold text-body hover:bg-canvas"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </header>

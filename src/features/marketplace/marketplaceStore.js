@@ -86,12 +86,12 @@ export const marketplaceActions = {
       const data = await marketplaceApi.bootstrap();
       setState({
         status: "ready",
-        listings: data.listings ?? listingsFixture,
-        threads: data.threads ?? threadsFixture,
-        transactions: data.transactions ?? transactionsFixture,
-        notifications: data.notifications ?? notificationsFixture,
-        myShares: data.portfolio?.myShares ?? portfolioFixture.myShares,
-        reserved: data.portfolio?.reserved ?? portfolioFixture.reserved,
+        listings: data.listings ?? (ENV.USE_MOCK_API ? listingsFixture : []),
+        threads: data.threads ?? (ENV.USE_MOCK_API ? threadsFixture : []),
+        transactions: data.transactions ?? (ENV.USE_MOCK_API ? transactionsFixture : []),
+        notifications: data.notifications ?? (ENV.USE_MOCK_API ? notificationsFixture : []),
+        myShares: data.portfolio?.myShares ?? (ENV.USE_MOCK_API ? portfolioFixture.myShares : 0),
+        reserved: data.portfolio?.reserved ?? (ENV.USE_MOCK_API ? portfolioFixture.reserved : 0),
       });
     } catch (error) {
       setState({ status: "error", error: error.message });
@@ -135,10 +135,39 @@ export const marketplaceActions = {
 
   /* -------------------------------------------------------------------- offers */
 
+  upsertThread(thread) {
+    if (!thread?.id) return;
+
+    setState((state) => {
+      const matchesThread = (item) =>
+        item.id === thread.id ||
+        (thread.rootOfferId && item.rootOfferId === thread.rootOfferId) ||
+        (String(item.id).startsWith("T-") &&
+          item.listingId === thread.listingId &&
+          item.role === thread.role &&
+          item.counterparty === thread.counterparty);
+
+      const exists = state.threads.some(matchesThread);
+      const threads = exists
+        ? state.threads.map((item) => (matchesThread(item) ? thread : item))
+        : [thread, ...state.threads];
+
+      return {
+        threads: threads.sort((a, b) => {
+          const aTime = new Date(a.events?.[a.events.length - 1]?.time || 0).getTime();
+          const bTime = new Date(b.events?.[b.events.length - 1]?.time || 0).getTime();
+          return bTime - aTime;
+        }),
+      };
+    });
+  },
+
   /** Opens a negotiation on someone else's listing. */
-  sendOffer(listing, { price, qty }) {
+  sendOffer(listing, { price }) {
+    if (!listing.allowOffers) return null;
+
     const offerPrice = toNumber(price);
-    const offerQty = Math.min(toNumber(qty), listing.qty);
+    const offerQty = listing.qty;
     if (offerPrice <= 0 || offerQty <= 0) return null;
 
     const thread = {
@@ -162,12 +191,19 @@ export const marketplaceActions = {
 
     setState((state) => ({ threads: [thread, ...state.threads] }));
     marketplaceApi
-      .sendOffer({ listingId: listing.id, price: offerPrice, qty: offerQty })
+      .sendOffer({ listingId: listing.id, price: offerPrice })
+      .then((serverThread) => {
+        if (!ENV.USE_MOCK_API && serverThread?.id) {
+          marketplaceActions.upsertThread(serverThread);
+        }
+      })
       .catch(() => {});
     marketplaceActions.showToast({
       key: "toastOfferSent",
       params: { name: listing.seller },
     });
+
+    if (!ENV.USE_MOCK_API) return thread;
 
     // The seller splits the difference, rounded to the nearest 5 pesos.
     scheduler.schedule(SIMULATION_DELAYS.SELLER_COUNTER, () => {
@@ -203,7 +239,10 @@ export const marketplaceActions = {
       status: isBuyer ? THREAD_STATUS.AGREED : THREAD_STATUS.AWAITING_PAY,
     });
     appendEvent(id, { by: "me", type: EVENT_TYPE.ACCEPT, price: null });
-    marketplaceApi.acceptOffer(id).catch(() => {});
+    marketplaceApi
+      .acceptOffer(id)
+      .then(() => !ENV.USE_MOCK_API && marketplaceActions.load({ force: true }))
+      .catch(() => {});
 
     if (isBuyer) {
       marketplaceActions.showToast({ key: "toastDealAgreed" });
@@ -219,7 +258,10 @@ export const marketplaceActions = {
   rejectThread(id) {
     updateThread(id, { status: THREAD_STATUS.REJECTED });
     appendEvent(id, { by: "me", type: EVENT_TYPE.REJECT, price: null });
-    marketplaceApi.rejectOffer(id).catch(() => {});
+    marketplaceApi
+      .rejectOffer(id)
+      .then(() => !ENV.USE_MOCK_API && marketplaceActions.load({ force: true }))
+      .catch(() => {});
     marketplaceActions.showToast({ key: "toastOfferRejected" });
   },
 
@@ -236,8 +278,18 @@ export const marketplaceActions = {
       type: EVENT_TYPE.COUNTER,
       price: counterPrice,
     });
-    marketplaceApi.counterOffer(id, counterPrice).catch(() => {});
     marketplaceActions.showToast({ key: "toastCounterSent" });
+
+    if (!ENV.USE_MOCK_API) {
+      marketplaceApi
+        .counterOffer(id, counterPrice)
+        .then((response) => {
+          if (response?.threadId) return;
+          if (response?.id) marketplaceActions.upsertThread(response);
+        })
+        .catch(() => {});
+      return;
+    }
 
     scheduler.schedule(SIMULATION_DELAYS.COUNTER_REPLY, () => {
       const current = getState().threads.find((t) => t.id === id);
@@ -332,13 +384,41 @@ export const marketplaceActions = {
       listings: [listing, ...state.listings],
       reserved: state.reserved + listingQty,
     }));
-    marketplaceApi.publishListing(listing).catch(() => {});
+    marketplaceApi
+      .publishListing(listing)
+      .then(() => !ENV.USE_MOCK_API && marketplaceActions.load({ force: true }))
+      .catch(() => {});
     marketplaceActions.notify({
       key: "notifListingLive",
       params: { id: listing.id, qty: listingQty },
     });
 
     return listing;
+  },
+
+  cancelListing(id) {
+    const listing = getState().listings.find((item) => item.id === id);
+    if (!listing || !listing.mine) return Promise.resolve(false);
+
+    setState((state) => ({
+      listings: state.listings.filter((item) => item.id !== id),
+      reserved: Math.max(0, state.reserved - listing.qty),
+    }));
+
+    return marketplaceApi
+      .cancelListing(id)
+      .then(() => {
+        marketplaceActions.showToast({ key: "toastListingCancelled" });
+        return ENV.USE_MOCK_API ? true : marketplaceActions.load({ force: true }).then(() => true);
+      })
+      .catch((error) => {
+        setState((state) => ({
+          listings: [listing, ...state.listings],
+          reserved: state.reserved + listing.qty,
+        }));
+        marketplaceActions.showToast(error.message || "Could not cancel listing");
+        return false;
+      });
   },
 
   /* ------------------------------------------------------------------ checkout */
@@ -362,14 +442,36 @@ export const marketplaceActions = {
    * Charges the buyer. Resolves once the funds are in escrow — the caller
    * navigates to the confirmation screen, where the settlement timeline plays.
    */
-  payNow() {
+  payNow(options = {}) {
     const { deal, payMethod } = getState();
     if (!deal || !payMethod) return Promise.resolve(false);
 
     setState({ payPhase: PAY_PHASE.PROCESSING });
-    marketplaceApi
-      .pay({ dealId: deal.threadId ?? deal.listingId, method: payMethod })
-      .catch(() => {});
+    const paymentPromise = marketplaceApi.pay({
+      dealId: deal.threadId ?? deal.listingId,
+      method: payMethod,
+      tokenId: options.tokenId,
+    });
+
+    if (!ENV.USE_MOCK_API) {
+      return paymentPromise
+        .then((payment) => {
+          if (payment.status !== "completed" && payment.status !== "escrowed") {
+            setState({ payPhase: PAY_PHASE.IDLE });
+            marketplaceActions.showToast("Payment is pending confirmation.");
+            return false;
+          }
+
+          setState({ payPhase: PAY_PHASE.DONE, doneStep: 1 });
+          return marketplaceActions.load({ force: true });
+        })
+        .then((result) => result !== false)
+        .catch((error) => {
+          setState({ payPhase: PAY_PHASE.IDLE });
+          marketplaceActions.showToast(error.message || "Payment failed");
+          return false;
+        });
+    }
 
     return new Promise((resolve) => {
       scheduler.schedule(SIMULATION_DELAYS.PROCESS_PAYMENT, () => {

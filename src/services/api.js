@@ -10,10 +10,15 @@ export class ApiError extends Error {
   }
 }
 
-let authToken = null;
+let authToken = ENV.AUTH_TOKEN || window.localStorage.getItem("jtc_marketplace_token");
 
 export const setAuthToken = (token) => {
   authToken = token || null;
+  if (authToken) {
+    window.localStorage.setItem("jtc_marketplace_token", authToken);
+  } else {
+    window.localStorage.removeItem("jtc_marketplace_token");
+  }
 };
 
 export const getAuthToken = () => authToken;
@@ -47,6 +52,7 @@ async function request(
         Accept: "application/json",
         ...(body ? { "Content-Type": "application/json" } : null),
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : null),
+        ...(authToken ? { "x-auth-token": authToken } : null),
         ...headers,
       },
       ...(body ? { body: JSON.stringify(body) } : null),

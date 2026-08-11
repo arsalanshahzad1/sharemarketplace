@@ -7,12 +7,14 @@ import { useI18n } from '@/context/I18nContext';
 import { ROUTES } from '@/constants';
 import { useMarketplace } from '@/features/marketplace/hooks';
 import { ListingTable } from '@/features/marketplace/components';
+import { selectLiveListings } from '@/features/marketplace/marketplaceSelectors';
 
 /** Every live listing in the marketplace. */
 export default function Browse() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { listings } = useMarketplace();
+  const state = useMarketplace();
+  const liveListings = selectLiveListings(state);
 
   return (
     <Page>
@@ -22,14 +24,14 @@ export default function Browse() {
         backLabel={t('back')}
         badge={
           <Badge tone="red">
-            {listings.length} {t('live')}
+            {liveListings.length} {t('live')}
           </Badge>
         }
         actions={
           <Button onClick={() => navigate(ROUTES.SELL)}>{t('sellTile')}</Button>
         }
       />
-      <ListingTable listings={listings} />
+      <ListingTable listings={state.listings} />
     </Page>
   );
 }

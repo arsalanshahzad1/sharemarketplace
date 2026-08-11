@@ -11,7 +11,13 @@ export default function ProtectedRoute({ redirectTo = ROUTES.LOGIN }) {
   const { isAuthenticated, status } = useAuth();
   const location = useLocation();
 
-  if (status === 'idle' || status === 'loading') return null;
+  if (status === 'loading') {
+    return (
+      <div className="px-6 py-12 text-center text-sm font-bold text-muted">
+        Loading session...
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;

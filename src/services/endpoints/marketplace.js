@@ -23,12 +23,17 @@ export const marketplaceEndpoints = {
   listings: (params) =>
     ENV.USE_MOCK_API
       ? mockResponse(listingsFixture)
-      : api.get("marketplace/listings", { params }),
+      : api.get("marketplace/listings-ui", { params }),
 
   createListing: (listing) =>
     ENV.USE_MOCK_API
       ? mockResponse(listing)
-      : api.post("marketplace/listings", listing),
+      : api.post("marketplace/listings", {
+          qty: listing.qty,
+          price: listing.price,
+          allowOffers: listing.allowOffers,
+          expiresAt: listing.expiresAt,
+        }),
 
   cancelListing: (listingId) =>
     ENV.USE_MOCK_API

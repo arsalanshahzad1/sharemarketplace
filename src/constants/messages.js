@@ -32,7 +32,7 @@ export const MESSAGES = {
     offersTile: "My offers",
     offersDesc: "Track negotiations and respond",
     historyTile: "Transactions",
-    historyDesc: "Completed transfers and payouts",
+    historyDesc: "Completed share transfers",
     activity: "Recent activity",
     viewAll: "View all",
 
@@ -46,6 +46,8 @@ export const MESSAGES = {
     type: "Type",
     view: "View",
     yourListing: "Your listing",
+    cancelListing: "Cancel listing",
+    awaitingPayment: "Awaiting payment",
     offersOk: "Offers welcome",
     fixedPrice: "Fixed price",
     expiresMeta: "expires {date}",
@@ -59,9 +61,10 @@ export const MESSAGES = {
     listedOn: "Listed",
     expiresOn: "Expires",
     escrowNote:
-      "Funds are held in escrow until the share transfer is confirmed in the registry. Sellers receive payout within 2 working days.",
+      "Card payments are captured by the platform account. Seller settlement is reconciled after the registry transfer is confirmed.",
     orderSummary: "Order summary",
     fee: "Marketplace fee",
+    conektaServiceFee: "Conekta service fee",
     totalDue: "Total due",
     buyAtAsk: "Buy at asking price",
     makeOffer: "Make an offer",
@@ -129,7 +132,9 @@ export const MESSAGES = {
     payWindow: "Pay within",
     payMethod: "Payment method",
     escrowShort:
-      "Your payment is held in escrow and only released to the seller after the share transfer is confirmed.",
+      "Your card payment is captured by the platform account and reconciled after the share transfer is confirmed.",
+    conektaFeeAck:
+      "An additional {pct}% ({amount}) will be charged to cover the Conekta card service fee.",
     payNow: "Pay",
     processing: "Processing…",
     selectMethod: "Select a payment method",
@@ -144,14 +149,14 @@ export const MESSAGES = {
     doneTitle: "Payment received",
     doneLine: "You bought {qty} shares from {name} for {total}.",
     viewReceipt: "View transaction",
-    doneStep1: "Payment received in escrow",
-    doneStep1Desc: "Funds are held securely until the transfer is confirmed.",
+    doneStep1: "Payment received",
+    doneStep1Desc: "The card charge was captured by the platform account.",
     doneStep2: "Shares transferred",
     doneStep2Desc:
       "The share registry now records you as the owner of {qty} shares.",
-    doneStep3: "Seller payout scheduled",
+    doneStep3: "Seller settlement pending",
     doneStep3Desc:
-      "The seller receives funds in their STP account within 2 working days.",
+      "Seller settlement is handled through the platform reconciliation process.",
 
     /* Transactions */
     historyTitle: "Transactions",
@@ -162,7 +167,7 @@ export const MESSAGES = {
     bought: "Bought from",
     sold: "Sold to",
     completed: "Completed",
-    payoutPending: "Payout in 2 days",
+    payoutPending: "Settlement pending",
     registryNote:
       "Every completed transaction is recorded permanently in the share registry.",
     emptyTxs: "No transactions yet.",
@@ -191,22 +196,23 @@ export const MESSAGES = {
     toastOfferRejected: "Offer rejected",
     toastCounterSent: "Counter sent",
     toastCounterAccepted: "{name} accepted your counter",
-    toastSharesTransferred: "Shares transferred — payout scheduled",
+    toastSharesTransferred: "Shares transferred - settlement pending",
+    toastListingCancelled: "Listing cancelled",
 
     /* Notifications */
     notifCountered: "{name} countered at {price} per share",
     notifCounterAccepted: "{name} accepted your counter of {price}",
-    notifPaid: "{name} paid — payout to your STP account within 2 working days",
+    notifPaid: "{name} paid - seller settlement is pending reconciliation",
     notifListingLive: "Your listing {id} is live — {qty} shares reserved",
     notifPaymentConfirmed:
       "Payment confirmed — {qty} shares transferred to your name",
     notifSeedOffer: "{name} made an offer of {price} on your listing {id}",
-    notifSeedPayout: "Payout of {amount} sent to your STP account",
+    notifSeedPayout: "Settlement of {amount} reconciled for your sale",
 
     /* Activity feed */
     actOffer: "{name} made an offer on your listing {id}",
     actListingLive: "Your listing {id} is live — {qty} shares reserved",
-    actPayout: "Payout sent to your STP account for sale {id}",
+    actPayout: "Settlement reconciled for sale {id}",
 
     /* Dashboard */
     dashTitle: "Portfolio",
@@ -286,6 +292,8 @@ export const MESSAGES = {
     type: "Tipo",
     view: "Ver",
     yourListing: "Tu publicación",
+    cancelListing: "Cancelar",
+    awaitingPayment: "Esperando pago",
     offersOk: "Acepta ofertas",
     fixedPrice: "Precio fijo",
     expiresMeta: "expira {date}",
@@ -299,9 +307,10 @@ export const MESSAGES = {
     listedOn: "Publicado",
     expiresOn: "Expira",
     escrowNote:
-      "Los fondos quedan en custodia (escrow) hasta confirmar la transferencia en el registro. El vendedor recibe su pago en 2 días hábiles.",
+      "El pago con tarjeta se captura en la cuenta de la plataforma. La liquidacion al vendedor se reconcilia despues de confirmar la transferencia en el registro.",
     orderSummary: "Resumen de orden",
     fee: "Comisión del mercado",
+    conektaServiceFee: "Comisión de servicio Conekta",
     totalDue: "Total a pagar",
     buyAtAsk: "Comprar al precio de venta",
     makeOffer: "Hacer una oferta",
@@ -370,7 +379,9 @@ export const MESSAGES = {
     payWindow: "Paga en",
     payMethod: "Método de pago",
     escrowShort:
-      "Tu pago queda en custodia y solo se libera al vendedor cuando se confirma la transferencia de acciones.",
+      "Tu pago con tarjeta se captura en la cuenta de la plataforma y se reconcilia despues de confirmar la transferencia de acciones.",
+    conektaFeeAck:
+      "Se cobrará un {pct}% adicional ({amount}) para cubrir la comisión de servicio de Conekta.",
     payNow: "Pagar",
     processing: "Procesando…",
     selectMethod: "Elige un método de pago",
@@ -385,15 +396,15 @@ export const MESSAGES = {
     doneTitle: "Pago recibido",
     doneLine: "Compraste {qty} acciones de {name} por {total}.",
     viewReceipt: "Ver transacción",
-    doneStep1: "Pago recibido en custodia",
+    doneStep1: "Pago recibido",
     doneStep1Desc:
-      "Los fondos están asegurados hasta confirmar la transferencia.",
+      "El cargo con tarjeta fue capturado por la cuenta de la plataforma.",
     doneStep2: "Acciones transferidas",
     doneStep2Desc:
       "El registro de accionistas ahora te muestra como titular de {qty} acciones.",
-    doneStep3: "Pago al vendedor programado",
+    doneStep3: "Liquidacion al vendedor pendiente",
     doneStep3Desc:
-      "El vendedor recibe los fondos en su cuenta STP en 2 días hábiles.",
+      "La liquidacion al vendedor se maneja mediante el proceso de reconciliacion de la plataforma.",
 
     /* Transactions */
     historyTitle: "Transacciones",
@@ -404,7 +415,7 @@ export const MESSAGES = {
     bought: "Compra a",
     sold: "Venta a",
     completed: "Completada",
-    payoutPending: "Pago en 2 días",
+    payoutPending: "Liquidacion pendiente",
     registryNote:
       "Cada transacción completada queda registrada permanentemente en el registro de acciones.",
     emptyTxs: "Aún no hay transacciones.",
@@ -433,24 +444,25 @@ export const MESSAGES = {
     toastOfferRejected: "Oferta rechazada",
     toastCounterSent: "Contraoferta enviada",
     toastCounterAccepted: "{name} aceptó tu contraoferta",
-    toastSharesTransferred: "Acciones transferidas — pago programado",
+    toastSharesTransferred: "Acciones transferidas - liquidacion pendiente",
+    toastListingCancelled: "Publicación cancelada",
 
     /* Notifications */
     notifCountered: "{name} contraofertó {price} por acción",
     notifCounterAccepted: "{name} aceptó tu contraoferta de {price}",
-    notifPaid: "{name} pagó — pago a tu cuenta STP en 2 días hábiles",
+    notifPaid: "{name} pago - la liquidacion al vendedor queda pendiente de reconciliacion",
     notifListingLive:
       "Tu publicación {id} está activa — {qty} acciones reservadas",
     notifPaymentConfirmed:
       "Pago confirmado — {qty} acciones transferidas a tu nombre",
     notifSeedOffer: "{name} hizo una oferta de {price} en tu publicación {id}",
-    notifSeedPayout: "Pago de {amount} enviado a tu cuenta STP",
+    notifSeedPayout: "Liquidacion de {amount} reconciliada por tu venta",
 
     /* Activity feed */
     actOffer: "{name} hizo una oferta en tu publicación {id}",
     actListingLive:
       "Tu publicación {id} está activa — {qty} acciones reservadas",
-    actPayout: "Pago enviado a tu cuenta STP por la venta {id}",
+    actPayout: "Liquidacion reconciliada por la venta {id}",
 
     /* Dashboard */
     dashTitle: "Portafolio",
@@ -497,3 +509,5 @@ export const MESSAGES = {
 };
 
 export default MESSAGES;
+
+

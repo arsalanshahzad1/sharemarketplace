@@ -1,5 +1,6 @@
 import { createStore, createStoreHook } from "@/store/store";
 import authApi from "./authApi";
+import { getAuthToken } from "@/services/api";
 
 const initialState = {
   user: null,
@@ -32,6 +33,10 @@ export const authActions = {
 
   async restoreSession() {
     if (getState().status !== "idle") return;
+    if (!getAuthToken()) {
+      setState({ user: null, status: "idle" });
+      return;
+    }
     setState({ status: "loading" });
     try {
       const user = await authApi.me();
