@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { LANGUAGES, ROUTES } from "@/constants";
 import { cx } from "@/utils/cx";
+import jtcLogo from "@/assets/images/jtc-logo.png";
 import {
   marketplaceActions,
   useMarketplaceStore,
@@ -38,9 +39,11 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-line bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between gap-2.5 px-4 sm:gap-4 sm:px-7">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
-          <div className="hidden size-[34px] flex-none items-center justify-center rounded-chip bg-brand text-sm font-extrabold tracking-[-0.02em] text-white min-[460px]:flex">
-            J3
-          </div>
+          <img
+            src={jtcLogo}
+            alt="Java Times Caffe"
+            className="hidden h-9 w-auto flex-none object-contain min-[460px]:block"
+          />
           <div className="min-w-0">
             <div className="truncate text-[12.5px] font-extrabold tracking-[-0.01em] sm:text-sm">
               JAVA TIMES CAFFÈ · JAVA 300
