@@ -295,7 +295,9 @@ export const marketplaceActions = {
       marketplaceApi
         .counterOffer(id, counterPrice)
         .then((response) => {
-          if (response?.threadId) return;
+          if (response?.threadId) {
+            return marketplaceActions.load({ force: true });
+          }
           if (response?.id) marketplaceActions.upsertThread(response);
         })
         .catch(() => {});
@@ -498,7 +500,7 @@ export const marketplaceActions = {
 
     setState({ payPhase: PAY_PHASE.PROCESSING });
     const paymentPromise = marketplaceApi.pay({
-      dealId: deal.orderId ?? deal.threadId ?? deal.listingId,
+      dealId: deal.orderId || deal.threadId || deal.listingId,
       method: payMethod,
       tokenId: options.tokenId,
     });
