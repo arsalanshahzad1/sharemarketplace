@@ -46,14 +46,18 @@ export default function ListingTable({ listings }) {
             </div>
           )}
 
-          {listings.map((listing) => (
-            <div
-              key={listing.id}
-              className={cx(
-                ROW,
-                "items-center border-b border-canvas py-[15px] last:border-b-0 hover:bg-surface-alt",
-              )}
-            >
+          {listings.map((listing) => {
+            const dealInProgress =
+              listing.dealInProgress || listing.status === "payment_pending";
+
+            return (
+              <div
+                key={listing.id}
+                className={cx(
+                  ROW,
+                  "items-center border-b border-canvas py-[15px] last:border-b-0 hover:bg-surface-alt",
+                )}
+              >
               <div className="flex min-w-0 items-center gap-[11px]">
                 <Avatar
                   initials={listing.initials}
@@ -84,8 +88,12 @@ export default function ListingTable({ listings }) {
               </div>
 
               <div>
-                <Badge tone={listing.allowOffers ? "green" : "neutral"}>
-                  {listing.allowOffers ? t("offersOk") : t("fixedPrice")}
+                <Badge tone={dealInProgress ? "red" : listing.allowOffers ? "green" : "neutral"}>
+                  {dealInProgress
+                    ? t("dealInProgress")
+                    : listing.allowOffers
+                      ? t("offersOk")
+                      : t("fixedPrice")}
                 </Badge>
               </div>
 
@@ -119,8 +127,9 @@ export default function ListingTable({ listings }) {
                   </Button>
                 )}
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
 

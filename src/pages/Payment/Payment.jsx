@@ -120,15 +120,18 @@ export default function Payment() {
     includeConektaFee: true,
   });
   const processing = payPhase === PAY_PHASE.PROCESSING || tokenizing;
+  const paymentExpired = countdown.expired;
   const expiry = parseExpiry(card.expiry);
   const rawCardNumber = onlyDigits(card.number);
   const baseAmount = order.subtotal;
 
   const buttonLabel = processing
     ? t('processing')
-    : !payMethod
-      ? t('selectMethod')
-      : `${t('payNow')} ${formatCurrency(order.total)}`;
+    : paymentExpired
+      ? t('paymentWindowExpired')
+      : !payMethod
+        ? t('selectMethod')
+        : `${t('payNow')} ${formatCurrency(order.total)}`;
 
   const validateCard = () => {
     if (!ENV.CONEKTA_PUBLIC_KEY) return 'Conekta public key is missing.';
@@ -166,6 +169,11 @@ export default function Payment() {
   };
 
   const submit = async () => {
+    if (paymentExpired) {
+      setPaymentError(t('paymentWindowExpiredDesc'));
+      return;
+    }
+
     try {
       setPaymentError(null);
       setTokenizing(true);
@@ -272,6 +280,12 @@ export default function Payment() {
               <input type="hidden" data-conekta="card[cvc]" value={onlyDigits(card.cvc)} readOnly />
             </form>
           )}
+
+          {paymentExpired && (
+            <div className="mt-4 rounded-field border border-brand-border bg-brand-soft px-4 py-3 text-xs font-bold leading-relaxed text-brand">
+              {t('paymentWindowExpiredDesc')}
+            </div>
+          )}
         </Card>
 
         <Card>
@@ -309,7 +323,7 @@ export default function Payment() {
             block
             size="lg"
             className="mt-[18px]"
-            disabled={!payMethod || processing}
+            disabled={!payMethod || processing || paymentExpired}
             onClick={submit}
           >
             {buttonLabel}

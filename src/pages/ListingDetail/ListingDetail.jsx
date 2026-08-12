@@ -12,6 +12,7 @@ import { ROUTES } from '@/constants';
 import { ENV } from '@/constants/env';
 import { formatCurrency, percentDelta } from '@/utils/formatCurrency';
 import { formatShortDate } from '@/utils/formatDate';
+import { marketplaceErrorMessage } from '@/utils/marketplaceErrors';
 import { toNumber, validatePrice } from '@/utils/validators';
 import { cx } from '@/utils/cx';
 import { useListing } from '@/features/marketplace/hooks';
@@ -37,6 +38,7 @@ export default function ListingDetail() {
   const [offer, setOffer] = useState({ price: 0, qty: 0 });
   const [seededFor, setSeededFor] = useState(null);
   const [error, setError] = useState(null);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
 
   // Seed the offer form from the listing: full quantity, 50 pesos under ask.
   // Adjusting during render rather than in an effect keeps the first paint
@@ -65,6 +67,7 @@ export default function ListingDetail() {
   }
 
   const order = calcOrder(listing.qty, listing.price, ENV.COMMISSION_PCT);
+  const dealInProgress = listing.dealInProgress || listing.status === 'payment_pending';
   const offerQty = listing.qty;
   const offerTotal = toNumber(offer.price) * offerQty;
   const askTotal = listing.price * offerQty;
@@ -77,17 +80,27 @@ export default function ListingDetail() {
         ? t('offerBelowAsk', { pct: Math.abs(delta) })
         : t('offerAboveAsk', { pct: delta });
 
-  const buyAtAsk = () => {
-    marketplaceActions.startPayment({
-      seller: listing.seller,
-      qty: listing.qty,
-      price: listing.price,
-      listingId: listing.id,
-    });
-    navigate(ROUTES.PAYMENT);
+  const buyAtAsk = async () => {
+    if (dealInProgress) return;
+    setCheckoutBusy(true);
+    try {
+      const deal = await marketplaceActions.checkoutListing(listing);
+      if (deal) navigate(ROUTES.PAYMENT);
+    } catch (checkoutError) {
+      const message = marketplaceErrorMessage(checkoutError, 'dealInProgress');
+      setError(typeof message === 'string' ? message : t(message.key, message.params));
+      marketplaceActions.showToast(message);
+    } finally {
+      setCheckoutBusy(false);
+    }
   };
 
-  const sendOffer = () => {
+  const sendOffer = async () => {
+    if (dealInProgress) {
+      setOffering(false);
+      return;
+    }
+
     if (!listing.allowOffers) {
       setOffering(false);
       return;
@@ -99,8 +112,13 @@ export default function ListingDetail() {
       return;
     }
     setError(null);
-    marketplaceActions.sendOffer(listing, { price: offer.price });
-    navigate(ROUTES.OFFERS);
+    try {
+      await marketplaceActions.sendOffer(listing, { price: offer.price });
+      navigate(ROUTES.OFFERS);
+    } catch (offerError) {
+      const message = marketplaceErrorMessage(offerError);
+      setError(typeof message === 'string' ? message : t(message.key, message.params));
+    }
   };
 
   const facts = [
@@ -159,13 +177,19 @@ export default function ListingDetail() {
             >
               {listing.allowOffers ? t('offersOk') : t('fixedPrice')}
             </span>
+            {dealInProgress && (
+              <>
+                <span>Â·</span>
+                <span className="font-extrabold text-brand">{t('dealInProgress')}</span>
+              </>
+            )}
           </div>
 
           <EscrowNote>{t('escrowNote')}</EscrowNote>
         </Card>
 
         <Card>
-          {offering && listing.allowOffers ? (
+          {offering && listing.allowOffers && !dealInProgress ? (
             <div className="[&>*+*]:mt-3.5">
               <SectionLabel>{t('makeOffer')}</SectionLabel>
 
@@ -201,6 +225,7 @@ export default function ListingDetail() {
               <Button block size="lg" onClick={sendOffer}>
                 {t('sendOffer')}
               </Button>
+              {error && <div className="text-xs font-bold text-brand">{error}</div>}
               <Button block variant="ghost" onClick={() => setOffering(false)}>
                 {t('cancel')}
               </Button>
@@ -224,15 +249,28 @@ export default function ListingDetail() {
               />
 
               <div className="mt-5 [&>button+button]:mt-2.5">
-                <Button block size="lg" onClick={buyAtAsk}>
-                  {t('buyAtAsk')}
+                <Button block size="lg" onClick={buyAtAsk} disabled={dealInProgress || checkoutBusy}>
+                  {dealInProgress ? t('dealInProgress') : checkoutBusy ? t('processing') : t('buyAtAsk')}
                 </Button>
                 {listing.allowOffers && (
-                  <Button block size="lg" variant="secondary" onClick={() => setOffering(true)}>
+                  <Button
+                    block
+                    size="lg"
+                    variant="secondary"
+                    disabled={dealInProgress}
+                    onClick={() => setOffering(true)}
+                  >
                     {t('makeOffer')}
                   </Button>
                 )}
               </div>
+
+              {dealInProgress && (
+                <div className="mt-3.5 text-center text-xs font-bold text-brand">
+                  {t('dealInProgressDesc')}
+                </div>
+              )}
+              {error && <div className="mt-3.5 text-center text-xs font-bold text-brand">{error}</div>}
 
               {!listing.allowOffers && (
                 <div className="mt-3.5 text-center text-xs font-bold text-muted">

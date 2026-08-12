@@ -11,6 +11,7 @@ import {
 import { ENV } from "@/constants/env";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { addDays } from "@/utils/formatDate";
+import { marketplaceErrorMessage } from "@/utils/marketplaceErrors";
 import { toNumber } from "@/utils/validators";
 import marketplaceApi from "./marketplaceApi";
 import {
@@ -189,21 +190,29 @@ export const marketplaceActions = {
       ],
     };
 
+    if (!ENV.USE_MOCK_API) {
+      return marketplaceApi
+        .sendOffer({ listingId: listing.id, price: offerPrice })
+        .then((serverThread) => {
+          if (serverThread?.id) marketplaceActions.upsertThread(serverThread);
+          marketplaceActions.showToast({
+            key: "toastOfferSent",
+            params: { name: listing.seller },
+          });
+          return serverThread;
+        })
+        .catch((error) => {
+          const message = marketplaceErrorMessage(error);
+          marketplaceActions.showToast(message);
+          throw error;
+        });
+    }
+
     setState((state) => ({ threads: [thread, ...state.threads] }));
-    marketplaceApi
-      .sendOffer({ listingId: listing.id, price: offerPrice })
-      .then((serverThread) => {
-        if (!ENV.USE_MOCK_API && serverThread?.id) {
-          marketplaceActions.upsertThread(serverThread);
-        }
-      })
-      .catch(() => {});
     marketplaceActions.showToast({
       key: "toastOfferSent",
       params: { name: listing.seller },
     });
-
-    if (!ENV.USE_MOCK_API) return thread;
 
     // The seller splits the difference, rounded to the nearest 5 pesos.
     scheduler.schedule(SIMULATION_DELAYS.SELLER_COUNTER, () => {
@@ -250,6 +259,8 @@ export const marketplaceActions = {
     }
 
     marketplaceActions.showToast({ key: "toastOfferAccepted" });
+    if (!ENV.USE_MOCK_API) return;
+
     scheduler.schedule(SIMULATION_DELAYS.SETTLE, () =>
       marketplaceActions.settleSale(id, price),
     );
@@ -360,6 +371,22 @@ export const marketplaceActions = {
 
   /* ------------------------------------------------------------------ listings */
 
+  upsertListing(listing) {
+    if (!listing?.id) return;
+
+    setState((state) => {
+      const exists = state.listings.some((item) => item.id === listing.id);
+      const listings =
+        listing.status === "sold" || listing.status === "cancelled"
+          ? state.listings.filter((item) => item.id !== listing.id)
+          : exists
+            ? state.listings.map((item) => (item.id === listing.id ? listing : item))
+            : [listing, ...state.listings];
+
+      return { listings };
+    });
+  },
+
   /** Publishes a listing and reserves the shares behind it. */
   publishListing({ qty, price, allowOffers, expiryDays }) {
     const listingQty = toNumber(qty);
@@ -380,14 +407,16 @@ export const marketplaceActions = {
       mine: true,
     };
 
+    if (!ENV.USE_MOCK_API) {
+      return marketplaceApi.publishListing(listing).then((response) => {
+        return marketplaceActions.load({ force: true }).then(() => response);
+      });
+    }
+
     setState((state) => ({
       listings: [listing, ...state.listings],
       reserved: state.reserved + listingQty,
     }));
-    marketplaceApi
-      .publishListing(listing)
-      .then(() => !ENV.USE_MOCK_API && marketplaceActions.load({ force: true }))
-      .catch(() => {});
     marketplaceActions.notify({
       key: "notifListingLive",
       params: { id: listing.id, qty: listingQty },
@@ -429,9 +458,30 @@ export const marketplaceActions = {
       deal,
       payMethod: null,
       payPhase: PAY_PHASE.IDLE,
-      payDeadline: Date.now() + ENV.PAY_WINDOW_MINS * 60 * 1000,
+      payDeadline: deal.lockExpiresAt
+        ? new Date(deal.lockExpiresAt).getTime()
+        : Date.now() + ENV.PAY_WINDOW_MINS * 60 * 1000,
       doneStep: 0,
     });
+  },
+
+  async checkoutListing(listing) {
+    if (!listing || listing.dealInProgress || listing.status === "payment_pending") {
+      return null;
+    }
+
+    const order = await marketplaceApi.checkoutListing(listing.id);
+    const deal = {
+      seller: listing.seller,
+      qty: order.qty ?? listing.qty,
+      price: order.price ?? listing.price,
+      listingId: listing.id,
+      orderId: order.orderId,
+      lockExpiresAt: order.lockExpiresAt,
+    };
+
+    marketplaceActions.startPayment(deal);
+    return deal;
   },
 
   selectPayMethod(method) {
@@ -448,7 +498,7 @@ export const marketplaceActions = {
 
     setState({ payPhase: PAY_PHASE.PROCESSING });
     const paymentPromise = marketplaceApi.pay({
-      dealId: deal.threadId ?? deal.listingId,
+      dealId: deal.orderId ?? deal.threadId ?? deal.listingId,
       method: payMethod,
       tokenId: options.tokenId,
     });

@@ -55,14 +55,19 @@ export default function Sell() {
     setStep(STEPS.REVIEW);
   };
 
-  const publish = () => {
-    const listing = marketplaceActions.publishListing({
-      qty: draft.qty,
-      price: draft.price,
-      allowOffers: draft.allowOffers,
-      expiryDays: draft.expiry,
-    });
-    if (listing) setStep(STEPS.PUBLISHED);
+  const publish = async () => {
+    try {
+      const listing = await marketplaceActions.publishListing({
+        qty: draft.qty,
+        price: draft.price,
+        allowOffers: draft.allowOffers,
+        expiryDays: draft.expiry,
+      });
+      if (listing) setStep(STEPS.PUBLISHED);
+    } catch (publishError) {
+      setError(publishError.message || t('marketplaceActionFailed'));
+      setStep(STEPS.DETAILS);
+    }
   };
 
   const expiryLabel =

@@ -48,6 +48,7 @@ export const MESSAGES = {
     yourListing: "Your listing",
     cancelListing: "Cancel listing",
     awaitingPayment: "Awaiting payment",
+    dealInProgress: "Deal in progress",
     offersOk: "Offers welcome",
     fixedPrice: "Fixed price",
     expiresMeta: "expires {date}",
@@ -69,6 +70,8 @@ export const MESSAGES = {
     buyAtAsk: "Buy at asking price",
     makeOffer: "Make an offer",
     fixedOnly: "This seller only accepts the asking price.",
+    dealInProgressDesc:
+      "This listing is locked while the buyer completes payment. It will become available again if the payment window expires.",
     offerPrice: "Your price per share",
     offerQty: "Quantity",
     max: "Max",
@@ -130,6 +133,9 @@ export const MESSAGES = {
     /* Payment */
     payTitle: "Payment",
     payWindow: "Pay within",
+    paymentWindowExpired: "Payment window expired",
+    paymentWindowExpiredDesc:
+      "This payment window has expired. The listing is available again if another buyer has not reserved it.",
     payMethod: "Payment method",
     escrowShort:
       "Your card payment is captured by the platform account and reconciled after the share transfer is confirmed.",
@@ -198,6 +204,8 @@ export const MESSAGES = {
     toastCounterAccepted: "{name} accepted your counter",
     toastSharesTransferred: "Shares transferred - settlement pending",
     toastListingCancelled: "Listing cancelled",
+    completeKycAction: "Please complete your investor KYC before making offers or buying shares in the marketplace.",
+    marketplaceActionFailed: "Marketplace action failed.",
 
     /* Notifications */
     notifCountered: "{name} countered at {price} per share",
@@ -294,6 +302,7 @@ export const MESSAGES = {
     yourListing: "Tu publicación",
     cancelListing: "Cancelar",
     awaitingPayment: "Esperando pago",
+    dealInProgress: "Trato en proceso",
     offersOk: "Acepta ofertas",
     fixedPrice: "Precio fijo",
     expiresMeta: "expira {date}",
@@ -315,6 +324,8 @@ export const MESSAGES = {
     buyAtAsk: "Comprar al precio de venta",
     makeOffer: "Hacer una oferta",
     fixedOnly: "Este vendedor solo acepta el precio de venta.",
+    dealInProgressDesc:
+      "Esta publicacion esta bloqueada mientras el comprador completa el pago. Volvera a estar disponible si vence la ventana de pago.",
     offerPrice: "Tu precio por acción",
     offerQty: "Cantidad",
     max: "Máx",
@@ -377,6 +388,9 @@ export const MESSAGES = {
     /* Payment */
     payTitle: "Pago",
     payWindow: "Paga en",
+    paymentWindowExpired: "Ventana de pago expirada",
+    paymentWindowExpiredDesc:
+      "Esta ventana de pago expiro. La publicacion vuelve a estar disponible si otro comprador no la ha reservado.",
     payMethod: "Método de pago",
     escrowShort:
       "Tu pago con tarjeta se captura en la cuenta de la plataforma y se reconcilia despues de confirmar la transferencia de acciones.",
@@ -446,6 +460,9 @@ export const MESSAGES = {
     toastCounterAccepted: "{name} aceptó tu contraoferta",
     toastSharesTransferred: "Acciones transferidas - liquidacion pendiente",
     toastListingCancelled: "Publicación cancelada",
+    completeKycAction:
+      "Completa tu KYC de inversionista antes de hacer ofertas o comprar acciones en el mercado.",
+    marketplaceActionFailed: "No se pudo completar la accion del mercado.",
 
     /* Notifications */
     notifCountered: "{name} contraofertó {price} por acción",

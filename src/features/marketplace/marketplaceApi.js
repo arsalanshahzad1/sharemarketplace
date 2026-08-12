@@ -9,6 +9,7 @@ export const marketplaceApi = {
   fetchListings: (params) => marketplaceEndpoints.listings(params),
   publishListing: (listing) => marketplaceEndpoints.createListing(listing),
   cancelListing: (id) => marketplaceEndpoints.cancelListing(id),
+  checkoutListing: (id) => marketplaceEndpoints.checkoutListing(id),
   sendOffer: (offer) => marketplaceEndpoints.createOffer(offer),
   acceptOffer: (threadId) => marketplaceEndpoints.respondToOffer(threadId, 'accept'),
   rejectOffer: (threadId) => marketplaceEndpoints.respondToOffer(threadId, 'reject'),

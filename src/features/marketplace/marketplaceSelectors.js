@@ -6,7 +6,11 @@ import { ENV } from '@/constants/env';
 export const selectListings = (state) => state.listings;
 
 export const selectLiveListings = (state) =>
-  state.listings.filter((listing) => listing.status === 'active' && Number(listing.availableQty ?? listing.qty) > 0);
+  state.listings.filter(
+    (listing) =>
+      (listing.status === 'active' && Number(listing.availableQty ?? listing.qty) > 0) ||
+      listing.status === 'payment_pending',
+  );
 
 export const selectListingById = (id) => (state) =>
   state.listings.find((listing) => listing.id === id) ?? null;
@@ -15,7 +19,11 @@ export const selectMyListings = (state) =>
   state.listings.filter((listing) => listing.mine);
 
 export const selectSharesForSale = (state) =>
-  selectLiveListings(state).reduce((total, listing) => total + Number(listing.availableQty ?? listing.qty), 0);
+  selectLiveListings(state).reduce(
+    (total, listing) =>
+      listing.status === 'active' ? total + Number(listing.availableQty ?? listing.qty) : total,
+    0,
+  );
 
 export const selectAvailableShares = (state) =>
   Math.max(0, state.myShares - state.reserved);

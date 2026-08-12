@@ -25,20 +25,29 @@ export const marketplaceEndpoints = {
       ? mockResponse(listingsFixture)
       : api.get("marketplace/listings-ui", { params }),
 
-  createListing: (listing) =>
-    ENV.USE_MOCK_API
-      ? mockResponse(listing)
-      : api.post("marketplace/listings", {
-          qty: listing.qty,
-          price: listing.price,
-          allowOffers: listing.allowOffers,
-          expiresAt: listing.expiresAt,
-        }),
+  createListing: (listing) => {
+    if (ENV.USE_MOCK_API) return mockResponse(listing);
+
+    const payload = {
+      qty: listing.qty,
+      price: listing.price,
+      allowOffers: listing.allowOffers,
+    };
+
+    if (listing.expiresAt) payload.expiresAt = listing.expiresAt;
+
+    return api.post("marketplace/listings", payload);
+  },
 
   cancelListing: (listingId) =>
     ENV.USE_MOCK_API
       ? mockResponse({ id: listingId, status: "cancelled" })
       : api.delete(`marketplace/listings/${listingId}`),
+
+  checkoutListing: (listingId) =>
+    ENV.USE_MOCK_API
+      ? mockResponse({ orderId: listingId, listingId, status: "payment_pending" })
+      : api.post(`marketplace/listings/${listingId}/buy`),
 
   createOffer: (offer) =>
     ENV.USE_MOCK_API

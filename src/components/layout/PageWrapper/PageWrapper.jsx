@@ -17,7 +17,7 @@ import {
 
 export default function PageWrapper() {
   const { tm } = useI18n();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const toast = useMarketplaceStore((state) => state.toast);
 
   useEffect(() => {
@@ -31,8 +31,19 @@ export default function PageWrapper() {
           return;
         }
         if (eventName === "marketplace.connected" || eventName === "socket.error") return;
+        if (
+          payload?.userId &&
+          user?.id &&
+          String(payload.userId) !== String(user.id)
+        ) {
+          return;
+        }
         if (eventName.startsWith("offer.")) {
           if (payload?.thread) marketplaceActions.upsertThread(payload.thread);
+          return;
+        }
+        if (eventName.startsWith("listing.")) {
+          if (payload?.listing) marketplaceActions.upsertListing(payload.listing);
           return;
         }
         marketplaceActions.load({ force: true });
@@ -43,7 +54,7 @@ export default function PageWrapper() {
       socket?.disconnect();
       disconnectMarketplaceSocket();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">

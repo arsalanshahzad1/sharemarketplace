@@ -19,8 +19,10 @@ export default function Offers() {
       seller: thread.counterparty,
       qty: thread.qty,
       price: threadPrice(thread),
+      orderId: thread.orderId,
       threadId: thread.id,
       listingId: thread.listingId,
+      lockExpiresAt: thread.lockExpiresAt,
     });
     navigate(ROUTES.PAYMENT);
   };
