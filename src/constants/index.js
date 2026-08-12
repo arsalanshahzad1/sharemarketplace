@@ -15,7 +15,7 @@ export const ROUTES = {
 export const listingPath = (listingId) => `/marketplace/${listingId}`;
 
 export const LANGUAGES = ["en", "es"];
-export const DEFAULT_LANGUAGE = "en";
+export const DEFAULT_LANGUAGE = "es";
 
 export const CURRENCY_PREFIX = "MX$";
 export const CURRENCY_LOCALE = "en-US";
