@@ -68,6 +68,8 @@ export default function ListingDetail() {
 
   const order = calcOrder(listing.qty, listing.price, ENV.COMMISSION_PCT);
   const dealInProgress = listing.dealInProgress || listing.status === 'payment_pending';
+  const hasOpenOffers = listing.hasOpenOffers || Number(listing.openOfferCount || 0) > 0;
+  const listingBlocked = dealInProgress || hasOpenOffers;
   const offerQty = listing.qty;
   const offerTotal = toNumber(offer.price) * offerQty;
   const askTotal = listing.price * offerQty;
@@ -81,7 +83,7 @@ export default function ListingDetail() {
         : t('offerAboveAsk', { pct: delta });
 
   const buyAtAsk = async () => {
-    if (dealInProgress) return;
+    if (listingBlocked) return;
     setCheckoutBusy(true);
     try {
       const deal = await marketplaceActions.checkoutListing(listing);
@@ -96,7 +98,7 @@ export default function ListingDetail() {
   };
 
   const sendOffer = async () => {
-    if (dealInProgress) {
+    if (listingBlocked) {
       setOffering(false);
       return;
     }
@@ -173,9 +175,12 @@ export default function ListingDetail() {
             </span>
             <span>·</span>
             <span
-              className={cx('font-extrabold', listing.allowOffers ? 'text-success' : 'text-body')}
+              className={cx(
+                'font-extrabold',
+                hasOpenOffers ? 'text-brand' : listing.allowOffers ? 'text-success' : 'text-body',
+              )}
             >
-              {listing.allowOffers ? t('offersOk') : t('fixedPrice')}
+              {hasOpenOffers ? t('offersInProgress') : listing.allowOffers ? t('offersOk') : t('fixedPrice')}
             </span>
             {dealInProgress && (
               <>
@@ -189,7 +194,7 @@ export default function ListingDetail() {
         </Card>
 
         <Card>
-          {offering && listing.allowOffers && !dealInProgress ? (
+          {offering && listing.allowOffers && !listingBlocked ? (
             <div className="[&>*+*]:mt-3.5">
               <SectionLabel>{t('makeOffer')}</SectionLabel>
 
@@ -249,15 +254,21 @@ export default function ListingDetail() {
               />
 
               <div className="mt-5 [&>button+button]:mt-2.5">
-                <Button block size="lg" onClick={buyAtAsk} disabled={dealInProgress || checkoutBusy}>
-                  {dealInProgress ? t('dealInProgress') : checkoutBusy ? t('processing') : t('buyAtAsk')}
+                <Button block size="lg" onClick={buyAtAsk} disabled={listingBlocked || checkoutBusy}>
+                  {dealInProgress
+                    ? t('dealInProgress')
+                    : hasOpenOffers
+                      ? t('offersInProgress')
+                      : checkoutBusy
+                        ? t('processing')
+                        : t('buyAtAsk')}
                 </Button>
                 {listing.allowOffers && (
                   <Button
                     block
                     size="lg"
                     variant="secondary"
-                    disabled={dealInProgress}
+                    disabled={listingBlocked}
                     onClick={() => setOffering(true)}
                   >
                     {t('makeOffer')}
@@ -265,9 +276,9 @@ export default function ListingDetail() {
                 )}
               </div>
 
-              {dealInProgress && (
+              {listingBlocked && (
                 <div className="mt-3.5 text-center text-xs font-bold text-brand">
-                  {t('dealInProgressDesc')}
+                  {t(dealInProgress ? 'dealInProgressDesc' : 'offersInProgressDesc')}
                 </div>
               )}
               {error && <div className="mt-3.5 text-center text-xs font-bold text-brand">{error}</div>}

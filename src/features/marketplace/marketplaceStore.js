@@ -59,6 +59,14 @@ const nextId = (prefix) =>
 const justNow = () => ({ key: "justNow" });
 
 /** Most recent price named in a thread — the number currently on the table. */
+const uniqueById = (items = []) => {
+  const byId = new Map();
+  items.forEach((item) => {
+    if (item?.id) byId.set(item.id, item);
+  });
+  return [...byId.values()];
+};
+
 const latestPrice = (thread) =>
   [...thread.events].reverse().find((event) => event.price)?.price ?? 0;
 
@@ -87,10 +95,10 @@ export const marketplaceActions = {
       const data = await marketplaceApi.bootstrap();
       setState({
         status: "ready",
-        listings: data.listings ?? (ENV.USE_MOCK_API ? listingsFixture : []),
-        threads: data.threads ?? (ENV.USE_MOCK_API ? threadsFixture : []),
-        transactions: data.transactions ?? (ENV.USE_MOCK_API ? transactionsFixture : []),
-        notifications: data.notifications ?? (ENV.USE_MOCK_API ? notificationsFixture : []),
+        listings: uniqueById(data.listings ?? (ENV.USE_MOCK_API ? listingsFixture : [])),
+        threads: uniqueById(data.threads ?? (ENV.USE_MOCK_API ? threadsFixture : [])),
+        transactions: uniqueById(data.transactions ?? (ENV.USE_MOCK_API ? transactionsFixture : [])),
+        notifications: uniqueById(data.notifications ?? (ENV.USE_MOCK_API ? notificationsFixture : [])),
         myShares: data.portfolio?.myShares ?? (ENV.USE_MOCK_API ? portfolioFixture.myShares : 0),
         reserved: data.portfolio?.reserved ?? (ENV.USE_MOCK_API ? portfolioFixture.reserved : 0),
       });
@@ -102,6 +110,11 @@ export const marketplaceActions = {
   /** Cancels every pending simulated callback. Call on teardown or sign-out. */
   teardown() {
     scheduler.cancelAll();
+  },
+
+  reset() {
+    scheduler.cancelAll();
+    marketplaceStore.reset();
   },
 
   /* ------------------------------------------------------------ notifications */

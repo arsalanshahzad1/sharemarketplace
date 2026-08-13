@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar/Navbar";
 // import Footer from "@/components/layout/Footer/Footer";
@@ -19,11 +19,24 @@ export default function PageWrapper() {
   const { tm } = useI18n();
   const { isAuthenticated, user } = useAuth();
   const toast = useMarketplaceStore((state) => state.toast);
+  const previousUserId = useRef(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return undefined;
+    if (!isAuthenticated) {
+      previousUserId.current = null;
+      marketplaceActions.reset();
+      disconnectMarketplaceSocket();
+      return undefined;
+    }
 
-    marketplaceActions.load();
+    const sessionChanged = previousUserId.current !== user?.id;
+    previousUserId.current = user?.id || null;
+
+    if (sessionChanged) {
+      marketplaceActions.reset();
+    }
+
+    marketplaceActions.load({ force: true });
     const socket = connectMarketplaceSocket({
       onEvent(eventName, payload) {
         if (eventName === "socket.connected") {

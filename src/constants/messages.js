@@ -49,6 +49,7 @@ export const MESSAGES = {
     cancelListing: "Cancel listing",
     awaitingPayment: "Awaiting payment",
     dealInProgress: "Deal in progress",
+    offersInProgress: "Offers in progress",
     offersOk: "Offers welcome",
     fixedPrice: "Fixed price",
     expiresMeta: "expires {date}",
@@ -72,6 +73,8 @@ export const MESSAGES = {
     fixedOnly: "This seller only accepts the asking price.",
     dealInProgressDesc:
       "This listing is locked while the buyer completes payment. It will become available again if the payment window expires.",
+    offersInProgressDesc:
+      "This listing has an offer in progress. It will become available again if the negotiation is rejected or expires.",
     offerPrice: "Your price per share",
     offerQty: "Quantity",
     max: "Max",
@@ -303,6 +306,7 @@ export const MESSAGES = {
     cancelListing: "Cancelar",
     awaitingPayment: "Esperando pago",
     dealInProgress: "Trato en proceso",
+    offersInProgress: "Ofertas en proceso",
     offersOk: "Acepta ofertas",
     fixedPrice: "Precio fijo",
     expiresMeta: "expira {date}",
@@ -326,6 +330,8 @@ export const MESSAGES = {
     fixedOnly: "Este vendedor solo acepta el precio de venta.",
     dealInProgressDesc:
       "Esta publicacion esta bloqueada mientras el comprador completa el pago. Volvera a estar disponible si vence la ventana de pago.",
+    offersInProgressDesc:
+      "Esta publicacion tiene una oferta en proceso. Volvera a estar disponible si la negociacion se rechaza o expira.",
     offerPrice: "Tu precio por acción",
     offerQty: "Cantidad",
     max: "Máx",

@@ -20,6 +20,7 @@ export function connectMarketplaceSocket({ onEvent } = {}) {
   const events = [
     "marketplace.connected",
     "listing.created",
+    "listing.updated",
     "listing.locked",
     "listing.unlocked",
     "listing.sold",

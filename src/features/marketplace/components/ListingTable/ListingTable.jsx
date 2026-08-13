@@ -49,6 +49,7 @@ export default function ListingTable({ listings }) {
           {listings.map((listing) => {
             const dealInProgress =
               listing.dealInProgress || listing.status === "payment_pending";
+            const hasOpenOffers = listing.hasOpenOffers || Number(listing.openOfferCount || 0) > 0;
 
             return (
               <div
@@ -88,9 +89,11 @@ export default function ListingTable({ listings }) {
               </div>
 
               <div>
-                <Badge tone={dealInProgress ? "red" : listing.allowOffers ? "green" : "neutral"}>
+                <Badge tone={dealInProgress ? "red" : hasOpenOffers ? "amber" : listing.allowOffers ? "green" : "neutral"}>
                   {dealInProgress
                     ? t("dealInProgress")
+                    : hasOpenOffers
+                      ? t("offersInProgress")
                     : listing.allowOffers
                       ? t("offersOk")
                       : t("fixedPrice")}
