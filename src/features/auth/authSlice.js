@@ -31,6 +31,18 @@ export const authActions = {
     authStore.reset();
   },
 
+  async sessionHandoff(code) {
+    setState({ status: "loading", error: null });
+    try {
+      const { user } = await authApi.sessionHandoff(code);
+      setState({ user, status: "authenticated" });
+      return user;
+    } catch (error) {
+      setState({ user: null, status: "error", error: error.message });
+      throw error;
+    }
+  },
+
   async restoreSession() {
     if (getState().status !== "idle") return;
     if (!getAuthToken()) {

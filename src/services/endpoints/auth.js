@@ -19,6 +19,11 @@ export const authEndpoints = {
 
   logout: () => (ENV.USE_MOCK_API ? mockResponse({ ok: true }) : api.post('auth/logout')),
 
+  sessionHandoff: (code) =>
+    ENV.USE_MOCK_API
+      ? mockResponse({ user: DEMO_USER, token: 'demo-token' })
+      : api.post('auth/session-handoff', { code }),
+
   /** Restores the session on page load from an existing cookie or token. */
   me: () => (ENV.USE_MOCK_API ? mockResponse(DEMO_USER) : api.get('auth/me')),
 };

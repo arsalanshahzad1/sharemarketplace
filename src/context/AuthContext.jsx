@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(auth.user),
       login: authActions.login,
       logout: authActions.logout,
+      sessionHandoff: authActions.sessionHandoff,
     }),
     [auth],
   );

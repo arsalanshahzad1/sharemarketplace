@@ -9,6 +9,7 @@ export const ROUTES = {
   PAYMENT_SUCCESS: "/payment/success",
   TRANSACTIONS: "/transactions",
   LOGIN: "/login",
+  AUTH_CONTINUE: "/auth/continue",
   NOT_FOUND: "*",
 };
 

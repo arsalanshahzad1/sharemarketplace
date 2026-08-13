@@ -11,6 +11,7 @@ import Payment from '@/pages/Payment/Payment';
 import PaymentSuccess from '@/pages/PaymentSuccess/PaymentSuccess';
 import Transactions from '@/pages/Transactions/Transactions';
 import Login from '@/pages/Login/Login';
+import AuthContinue from '@/pages/AuthContinue/AuthContinue';
 import NotFound from '@/pages/NotFound/NotFound';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -19,6 +20,7 @@ export default function AppRoutes() {
     <Routes>
       <Route element={<PageWrapper />}>
         <Route path={ROUTES.LOGIN} element={<Login />} />
+        <Route path={ROUTES.AUTH_CONTINUE} element={<AuthContinue />} />
         <Route element={<ProtectedRoute />}>
           <Route path={ROUTES.HOME} element={<Home />} />
           <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />

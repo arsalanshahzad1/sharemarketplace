@@ -16,6 +16,12 @@ export const authApi = {
     }
   },
 
+  async sessionHandoff(code) {
+    const { user, token } = await authEndpoints.sessionHandoff(code);
+    setAuthToken(token);
+    return { user, token };
+  },
+
   me: () => authEndpoints.me(),
 };
 
