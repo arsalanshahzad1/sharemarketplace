@@ -6,16 +6,19 @@ import { Page } from "@/components/layout/PageWrapper/PageWrapper";
 import { ROUTES } from "@/constants";
 import { ENV } from "@/constants/env";
 import { useAuth } from "@/context/AuthContext";
+import { getAuthToken } from "@/services/api";
 
 export default function Login() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, status } = useAuth();
   const location = useLocation();
+  const hasStoredToken = Boolean(getAuthToken());
+  const isRestoring = status === "loading" || (status === "idle" && hasStoredToken);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isRestoring) {
       window.location.assign(ENV.INVESTIN_LOGIN_URL);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isRestoring]);
 
   if (isAuthenticated) {
     return <Navigate to={location.state?.from?.pathname || ROUTES.HOME} replace />;
@@ -27,16 +30,20 @@ export default function Login() {
         <SectionLabel>Investor Login</SectionLabel>
         <div className="mt-5 space-y-4">
           <p className="text-sm font-bold text-muted">
-            Please sign in through Investin to access the marketplace.
+            {isRestoring
+              ? "Loading session..."
+              : "Please sign in through Investin to access the marketplace."}
           </p>
-          <Button
-            type="button"
-            block
-            size="lg"
-            onClick={() => window.location.assign(ENV.INVESTIN_LOGIN_URL)}
-          >
-            Go to Investin login
-          </Button>
+          {!isRestoring ? (
+            <Button
+              type="button"
+              block
+              size="lg"
+              onClick={() => window.location.assign(ENV.INVESTIN_LOGIN_URL)}
+            >
+              Go to Investin login
+            </Button>
+          ) : null}
         </div>
       </Card>
     </Page>
