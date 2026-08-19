@@ -391,11 +391,28 @@ export const marketplaceActions = {
 
     setState((state) => {
       const exists = state.listings.some((item) => item.id === listing.id);
+      const mergeListing = (current) => {
+        const publicUpdateForMyActiveLock =
+          current.canContinuePayment &&
+          listing.status === "payment_pending" &&
+          String(listing.lockedByOrderId || "") === String(current.paymentOrderId || current.lockedByOrderId || "") &&
+          !listing.canContinuePayment;
+
+        return publicUpdateForMyActiveLock
+          ? {
+              ...listing,
+              lockedByMe: current.lockedByMe,
+              canContinuePayment: current.canContinuePayment,
+              paymentOrderId: current.paymentOrderId,
+              paymentExpiresAt: current.paymentExpiresAt,
+            }
+          : listing;
+      };
       const listings =
         listing.status === "sold" || listing.status === "cancelled"
           ? state.listings.filter((item) => item.id !== listing.id)
           : exists
-            ? state.listings.map((item) => (item.id === listing.id ? listing : item))
+            ? state.listings.map((item) => (item.id === listing.id ? mergeListing(item) : item))
             : [listing, ...state.listings];
 
       return { listings };
@@ -481,7 +498,25 @@ export const marketplaceActions = {
   },
 
   async checkoutListing(listing) {
-    if (!listing || listing.dealInProgress || listing.status === "payment_pending") {
+    if (!listing) {
+      return null;
+    }
+
+    if (listing.canContinuePayment && listing.paymentOrderId) {
+      const deal = {
+        seller: listing.seller,
+        qty: listing.qty,
+        price: listing.price,
+        listingId: listing.id,
+        orderId: listing.paymentOrderId,
+        lockExpiresAt: listing.paymentExpiresAt || listing.lockExpiresAt,
+      };
+
+      marketplaceActions.startPayment(deal);
+      return deal;
+    }
+
+    if (listing.dealInProgress || listing.status === "payment_pending") {
       return null;
     }
 

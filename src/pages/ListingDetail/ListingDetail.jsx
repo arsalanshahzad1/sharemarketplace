@@ -68,7 +68,9 @@ export default function ListingDetail() {
 
   const order = calcOrder(listing.qty, listing.price, ENV.COMMISSION_PCT);
   const dealInProgress = listing.dealInProgress || listing.status === 'payment_pending';
+  const canContinuePayment = Boolean(listing.canContinuePayment && listing.paymentOrderId);
   const hasOpenOffers = listing.hasOpenOffers || Number(listing.openOfferCount || 0) > 0;
+  const buyBlocked = (dealInProgress && !canContinuePayment) || hasOpenOffers;
   const listingBlocked = dealInProgress || hasOpenOffers;
   const offerQty = listing.qty;
   const offerTotal = toNumber(offer.price) * offerQty;
@@ -83,7 +85,7 @@ export default function ListingDetail() {
         : t('offerAboveAsk', { pct: delta });
 
   const buyAtAsk = async () => {
-    if (listingBlocked) return;
+    if (buyBlocked) return;
     setCheckoutBusy(true);
     try {
       const deal = await marketplaceActions.checkoutListing(listing);
@@ -254,9 +256,11 @@ export default function ListingDetail() {
               />
 
               <div className="mt-5 [&>button+button]:mt-2.5">
-                <Button block size="lg" onClick={buyAtAsk} disabled={listingBlocked || checkoutBusy}>
-                  {dealInProgress
-                    ? t('dealInProgress')
+                <Button block size="lg" onClick={buyAtAsk} disabled={buyBlocked || checkoutBusy}>
+                  {canContinuePayment
+                    ? t('proceedPay')
+                    : dealInProgress
+                      ? t('dealInProgress')
                     : hasOpenOffers
                       ? t('offersInProgress')
                       : checkoutBusy
