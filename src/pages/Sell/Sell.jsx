@@ -41,6 +41,7 @@ export default function Sell() {
     expiry: '14',
   });
   const [error, setError] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   const qty = toNumber(draft.qty);
   const price = toNumber(draft.price);
@@ -56,6 +57,10 @@ export default function Sell() {
   };
 
   const publish = async () => {
+    if (publishing) return;
+    setPublishing(true);
+    setError(null);
+
     try {
       const listing = await marketplaceActions.publishListing({
         qty: draft.qty,
@@ -67,6 +72,7 @@ export default function Sell() {
     } catch (publishError) {
       setError(publishError.message || t('marketplaceActionFailed'));
       setStep(STEPS.DETAILS);
+      setPublishing(false);
     }
   };
 
@@ -204,12 +210,13 @@ export default function Sell() {
               variant="neutral"
               size="lg"
               className="flex-1"
+              disabled={publishing}
               onClick={() => setStep(STEPS.DETAILS)}
             >
               {t('back')}
             </Button>
-            <Button size="lg" className="flex-[2]" onClick={publish}>
-              {t('publish')}
+            <Button size="lg" className="flex-[2]" onClick={publish} disabled={publishing}>
+              {publishing ? t('processing') : t('publish')}
             </Button>
           </div>
         </Card>
