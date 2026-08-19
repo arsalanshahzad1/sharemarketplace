@@ -40,13 +40,13 @@ export default function ListingDetail() {
   const [error, setError] = useState(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
 
-  // Seed the offer form from the listing: full quantity, 50 pesos under ask.
+  // Seed the offer form from the listing: full quantity, price entered by buyer.
   // Adjusting during render rather than in an effect keeps the first paint
   // correct, and re-seeds only when a different listing is opened — a price
   // change elsewhere in the store must not overwrite what the buyer typed.
   if (listing && seededFor !== listing.id) {
     setSeededFor(listing.id);
-    setOffer({ price: listing.price - 50, qty: listing.qty });
+    setOffer({ price: '', qty: listing.qty });
   }
 
   // On a deep link the store is still empty; wait for the bootstrap rather than
@@ -73,12 +73,16 @@ export default function ListingDetail() {
   const buyBlocked = (dealInProgress && !canContinuePayment) || hasOpenOffers;
   const listingBlocked = dealInProgress || hasOpenOffers;
   const offerQty = listing.qty;
-  const offerTotal = toNumber(offer.price) * offerQty;
+  const offerPrice = Math.max(0, toNumber(offer.price));
+  const hasOfferPrice = String(offer.price).trim() !== '' && offerPrice > 0;
+  const offerTotal = offerPrice * offerQty;
   const askTotal = listing.price * offerQty;
   const delta = percentDelta(offerTotal, askTotal);
 
   const deltaLine =
-    delta === 0
+    !hasOfferPrice
+      ? null
+      : delta === 0
       ? t('offerSameAsAsk')
       : delta < 0
         ? t('offerBelowAsk', { pct: Math.abs(delta) })
@@ -203,9 +207,15 @@ export default function ListingDetail() {
               <Input
                 label={t('offerPrice')}
                 type="number"
+                min="0"
                 prefix="MX$"
                 value={offer.price}
-                onChange={(e) => setOffer((o) => ({ ...o, price: e.target.value }))}
+                onChange={(e) =>
+                  setOffer((o) => ({
+                    ...o,
+                    price: e.target.value === '' ? '' : String(Math.max(0, toNumber(e.target.value))),
+                  }))
+                }
               />
 
               <div>
@@ -219,14 +229,16 @@ export default function ListingDetail() {
                     {formatCurrency(offerTotal)}
                   </span>
                 </div>
-                <div
-                  className={cx(
-                    'mt-1.5 text-xs font-bold',
-                    delta < 0 ? 'text-success' : 'text-body',
-                  )}
-                >
-                  {deltaLine}
-                </div>
+                {deltaLine && (
+                  <div
+                    className={cx(
+                      'mt-1.5 text-xs font-bold',
+                      delta < 0 ? 'text-success' : 'text-body',
+                    )}
+                  >
+                    {deltaLine}
+                  </div>
+                )}
               </div>
 
               <Button block size="lg" onClick={sendOffer}>

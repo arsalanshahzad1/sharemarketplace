@@ -569,7 +569,7 @@ export const marketplaceActions = {
         .catch((error) => {
           setState({ payPhase: PAY_PHASE.IDLE });
           marketplaceActions.showToast(error.message || "Payment failed");
-          return false;
+          throw error;
         });
     }
 

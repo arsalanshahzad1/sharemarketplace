@@ -67,7 +67,7 @@ async function request(
       throw new ApiError(payload?.message ?? response.statusText, {
         status: response.status,
         code: payload?.code,
-        details: payload?.details,
+        details: payload?.details ?? payload?.errors ?? payload,
       });
     }
 

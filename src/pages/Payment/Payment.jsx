@@ -49,7 +49,7 @@ const onlyDigits = (value) => String(value || '').replace(/\D/g, '');
 
 function formatCardNumber(value) {
   return onlyDigits(value)
-    .slice(0, 19)
+    .slice(0, 16)
     .replace(/(.{4})/g, '$1 ')
     .trim();
 }
@@ -68,12 +68,73 @@ function parseExpiry(value) {
   };
 }
 
+function expiryIsPast(month, year) {
+  const monthNumber = Number(month);
+  const yearNumber = Number(year);
+  if (!monthNumber || !yearNumber) return false;
+
+  const fullYear = 2000 + yearNumber;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  return fullYear < currentYear || (fullYear === currentYear && monthNumber < currentMonth);
+}
+
 function detectBrand(cardNumber) {
   const digits = onlyDigits(cardNumber);
   if (/^4/.test(digits)) return 'Visa';
   if (/^(5[1-5]|2[2-7])/.test(digits)) return 'Mastercard';
   if (/^3[47]/.test(digits)) return 'American Express';
   return 'Card';
+}
+
+function emptyCardErrors() {
+  return {
+    number: null,
+    name: null,
+    expiry: null,
+    cvc: null,
+    form: null,
+  };
+}
+
+function conektaParamToField(param = '') {
+  if (param.includes('number')) return 'number';
+  if (param.includes('name')) return 'name';
+  if (
+    param.includes('exp_month') ||
+    param.includes('exp_year') ||
+    param.includes('expiry') ||
+    param.includes('expired_card')
+  ) return 'expiry';
+  if (param.includes('cvc')) return 'cvc';
+  return 'form';
+}
+
+function getErrorDetails(error) {
+  if (Array.isArray(error?.details)) return error.details;
+  if (Array.isArray(error?.details?.details)) return error.details.details;
+  if (Array.isArray(error?.details?.providerResponse?.details)) return error.details.providerResponse.details;
+  if (error?.rawConektaError) return [error.rawConektaError];
+  return [];
+}
+
+function parsePaymentError(error) {
+  const details = getErrorDetails(error);
+  const firstDetail = details[0];
+  const message =
+    firstDetail?.message ||
+    firstDetail?.message_to_purchaser ||
+    firstDetail?.debug_message ||
+    error?.message ||
+    'Payment failed';
+  const field = conektaParamToField(firstDetail?.param || firstDetail?.code || '');
+
+  return {
+    field,
+    message,
+  };
 }
 
 /** Checkout: collect card details, tokenize with Conekta, then pay backend order. */
@@ -91,7 +152,7 @@ export default function Payment() {
     cvc: '',
   });
   const [tokenizing, setTokenizing] = useState(false);
-  const [paymentError, setPaymentError] = useState(null);
+  const [cardErrors, setCardErrors] = useState(emptyCardErrors);
 
   useEffect(() => {
     if (!ENV.CONEKTA_PUBLIC_KEY) return;
@@ -100,7 +161,7 @@ export default function Payment() {
       .then((Conekta) => {
         Conekta?.setPublicKey?.(ENV.CONEKTA_PUBLIC_KEY);
       })
-      .catch((error) => setPaymentError(error.message));
+      .catch((error) => setCardErrors((current) => ({ ...current, form: error.message })));
   }, []);
 
   if (!deal || payPhase === PAY_PHASE.DONE) {
@@ -134,20 +195,29 @@ export default function Payment() {
         : `${t('payNow')} ${formatCurrency(order.total)}`;
 
   const validateCard = () => {
-    if (!ENV.CONEKTA_PUBLIC_KEY) return 'Conekta public key is missing.';
-    if (rawCardNumber.length < 13) return 'Enter a valid card number.';
-    if (!card.name.trim()) return 'Enter the cardholder name.';
-    if (!expiry.month || !expiry.year) return 'Enter expiry as MM/YY.';
+    const errors = emptyCardErrors();
+
+    if (!ENV.CONEKTA_PUBLIC_KEY) errors.form = 'Conekta public key is missing.';
+    if (rawCardNumber.length !== 16) errors.number = 'Enter a 16-digit card number.';
+    if (!card.name.trim()) errors.name = 'Enter the cardholder name.';
+    if (!expiry.month || !expiry.year) errors.expiry = 'Enter expiry as MM/YY.';
     if (Number(expiry.month) < 1 || Number(expiry.month) > 12) {
-      return 'Enter a valid expiry month.';
+      errors.expiry = 'Enter a valid expiry month.';
     }
-    if (onlyDigits(card.cvc).length < 3) return 'Enter a valid CVC.';
-    return null;
+    if (!errors.expiry && expiryIsPast(expiry.month, expiry.year)) {
+      errors.expiry = 'The card has expired.';
+    }
+    if (onlyDigits(card.cvc).length !== 3) errors.cvc = 'Enter a 3-digit CVC.';
+
+    return Object.values(errors).some(Boolean) ? errors : null;
   };
 
   const createToken = async () => {
     const validationError = validateCard();
-    if (validationError) throw new Error(validationError);
+    if (validationError) {
+      setCardErrors(validationError);
+      throw new Error(validationError.form || 'Please correct the highlighted card fields.');
+    }
 
     const Conekta = await loadConektaScript();
     Conekta.setPublicKey(ENV.CONEKTA_PUBLIC_KEY);
@@ -163,19 +233,23 @@ export default function Payment() {
             cardholderName: card.name.trim(),
             expiry: `${expiry.month}/${expiry.year}`,
           }),
-        (error) => reject(new Error(error?.message || 'Unable to tokenize card.')),
+        (error) => {
+          const tokenError = new Error(error?.message || error?.message_to_purchaser || 'Unable to tokenize card.');
+          tokenError.rawConektaError = error;
+          reject(tokenError);
+        },
       );
     });
   };
 
   const submit = async () => {
     if (paymentExpired) {
-      setPaymentError(t('paymentWindowExpiredDesc'));
+      setCardErrors((current) => ({ ...current, form: t('paymentWindowExpiredDesc') }));
       return;
     }
 
     try {
-      setPaymentError(null);
+      setCardErrors(emptyCardErrors());
       setTokenizing(true);
       const token = await createToken();
       setTokenizing(false);
@@ -184,7 +258,11 @@ export default function Payment() {
       if (paid) navigate(ROUTES.PAYMENT_SUCCESS);
     } catch (error) {
       setTokenizing(false);
-      setPaymentError(error.message);
+      const parsedError = parsePaymentError(error);
+      setCardErrors((current) => ({
+        ...current,
+        [parsedError.field]: parsedError.message,
+      }));
     }
   };
 
@@ -228,6 +306,7 @@ export default function Payment() {
                   }))
                 }
                 placeholder="4242 4242 4242 4242"
+                error={cardErrors.number}
               />
 
               <Input
@@ -241,6 +320,7 @@ export default function Payment() {
                   }))
                 }
                 placeholder="FULL NAME"
+                error={cardErrors.name}
               />
 
               <div className="grid grid-cols-2 gap-3">
@@ -256,6 +336,7 @@ export default function Payment() {
                     }))
                   }
                   placeholder="MM/YY"
+                  error={cardErrors.expiry}
                 />
                 <Input
                   label="CVC"
@@ -265,13 +346,19 @@ export default function Payment() {
                   onChange={(event) =>
                     setCard((current) => ({
                       ...current,
-                      cvc: onlyDigits(event.target.value).slice(0, 4),
+                      cvc: onlyDigits(event.target.value).slice(0, 3),
                     }))
                   }
                   placeholder="123"
-                  error={paymentError}
+                  error={cardErrors.cvc}
                 />
               </div>
+
+              {cardErrors.form && (
+                <div className="text-xs font-bold text-brand" role="alert">
+                  {cardErrors.form}
+                </div>
+              )}
 
               <input type="hidden" data-conekta="card[number]" value={rawCardNumber} readOnly />
               <input type="hidden" data-conekta="card[name]" value={card.name.trim()} readOnly />
