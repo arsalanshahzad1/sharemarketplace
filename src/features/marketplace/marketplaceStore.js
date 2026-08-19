@@ -33,6 +33,12 @@ const initialState = {
 
   myShares: 0,
   reserved: 0,
+  currentSharePrice: 0,
+  lastTradePrice: 0,
+  previousTradePrice: 0,
+  lastTradeDirection: "flat",
+  volume30dShares: 0,
+  volume30dValue: 0,
 
   /** The agreed trade being paid for, or null outside checkout. */
   deal: null,
@@ -101,6 +107,12 @@ export const marketplaceActions = {
         notifications: uniqueById(data.notifications ?? (ENV.USE_MOCK_API ? notificationsFixture : [])),
         myShares: data.portfolio?.myShares ?? (ENV.USE_MOCK_API ? portfolioFixture.myShares : 0),
         reserved: data.portfolio?.reserved ?? (ENV.USE_MOCK_API ? portfolioFixture.reserved : 0),
+        currentSharePrice: data.portfolio?.currentSharePrice ?? data.marketStats?.currentSharePrice ?? 0,
+        lastTradePrice: data.marketStats?.lastTradePrice ?? 0,
+        previousTradePrice: data.marketStats?.previousTradePrice ?? 0,
+        lastTradeDirection: data.marketStats?.lastTradeDirection ?? "flat",
+        volume30dShares: data.marketStats?.volume30dShares ?? 0,
+        volume30dValue: data.marketStats?.volume30dValue ?? 0,
       });
     } catch (error) {
       setState({ status: "error", error: error.message });
@@ -115,6 +127,25 @@ export const marketplaceActions = {
   reset() {
     scheduler.cancelAll();
     marketplaceStore.reset();
+  },
+
+  updateMarketStats(stats = {}) {
+    setState({
+      currentSharePrice: stats.currentSharePrice ?? getState().currentSharePrice,
+      lastTradePrice: stats.lastTradePrice ?? getState().lastTradePrice,
+      previousTradePrice: stats.previousTradePrice ?? getState().previousTradePrice,
+      lastTradeDirection: stats.lastTradeDirection ?? getState().lastTradeDirection,
+      volume30dShares: stats.volume30dShares ?? getState().volume30dShares,
+      volume30dValue: stats.volume30dValue ?? getState().volume30dValue,
+    });
+  },
+
+  updatePortfolio(portfolio = {}) {
+    setState({
+      myShares: portfolio.myShares ?? getState().myShares,
+      reserved: portfolio.reserved ?? getState().reserved,
+      currentSharePrice: portfolio.currentSharePrice ?? getState().currentSharePrice,
+    });
   },
 
   /* ------------------------------------------------------------ notifications */

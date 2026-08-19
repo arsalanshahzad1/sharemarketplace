@@ -2,6 +2,11 @@
  * Single market statistic: label, icon chip, value and a footnote or trend row.
  */
 export default function StatCard({ label, icon, value, meta, trend, children }) {
+  const trendTone = trend?.tone === "down" ? "text-brand" : "text-success";
+  const trendBg = trend?.tone === "down" ? "bg-brand-soft" : "bg-success-soft";
+  const iconTone = trend ? trendTone : "text-brand";
+  const iconBg = trend ? trendBg : "bg-brand-soft";
+
   return (
     <div className="flex flex-col justify-between gap-[18px] rounded-card border border-line bg-surface p-5">
       <div className="flex items-center justify-between gap-2.5">
@@ -9,7 +14,7 @@ export default function StatCard({ label, icon, value, meta, trend, children }) 
           {label}
         </div>
         {icon && (
-          <span className="flex size-[30px] flex-none items-center justify-center rounded-chip bg-brand-soft text-brand">
+          <span className={`flex size-[30px] flex-none items-center justify-center rounded-chip ${iconBg} ${iconTone}`}>
             {icon}
           </span>
         )}
@@ -21,11 +26,11 @@ export default function StatCard({ label, icon, value, meta, trend, children }) 
         </div>
 
         {trend ? (
-          <div className="mt-1.5 flex items-center gap-2 text-success">
-            <span className="rounded-full bg-success-soft px-[9px] py-0.5 text-xs font-extrabold text-success">
+          <div className={`mt-1.5 flex items-center gap-2 ${trendTone}`}>
+            <span className={`rounded-full px-[9px] py-0.5 text-xs font-extrabold ${trendBg} ${trendTone}`}>
               {trend.label}
             </span>
-            {trend.chart}
+            {trend.icon || trend.chart}
           </div>
         ) : (
           meta && (

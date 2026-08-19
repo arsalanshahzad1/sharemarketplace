@@ -9,6 +9,7 @@ import { THREAD_ROLE, THREAD_STATUS, TX_DIRECTION, TX_STATUS } from '@/constants
 export const portfolioFixture = {
   myShares: 120,
   reserved: 15,
+  currentSharePrice: 1150,
 };
 
 export const listingsFixture = [
@@ -149,11 +150,12 @@ export const notificationsFixture = [
 
 /** Static market statistics shown on the home summary. */
 export const marketStatsFixture = {
-  lastPrice: 1150,
-  changePct: 4.5,
-  sparkline: '0,17 12,15 24,16 36,11 48,12 60,7 72,4',
+  currentSharePrice: 1150,
+  lastTradePrice: 1150,
+  previousTradePrice: 1080,
+  lastTradeDirection: 'up',
   volume30dShares: 320,
-  volume30dValue: 'MX$364,800',
+  volume30dValue: 368000,
 };
 
 /** Recent-activity feed on the home page. */

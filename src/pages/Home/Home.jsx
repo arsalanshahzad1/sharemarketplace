@@ -4,8 +4,8 @@ import {
   HistoryIcon,
   MessagesIcon,
   SearchIcon,
-  Sparkline,
   TagIcon,
+  TrendDownIcon,
   TrendUpIcon,
 } from '@/assets/icons';
 import Badge from '@/components/common/Badge/Badge';
@@ -39,6 +39,8 @@ export default function Home() {
   const estimatedValue = selectEstimatedValue(state);
   const openOffers = selectOpenOfferCount(state);
   const lastTradePrice = selectLastTradePrice(state);
+  const lastTradeDirection = state.lastTradeDirection || 'flat';
+  const lastTradeMoved = lastTradeDirection !== 'flat';
   const volume30d = selectVolume30d(state);
   const recentActivity = selectRecentActivity(state).map((item) => ({
     ...item,
@@ -97,12 +99,22 @@ export default function Home() {
 
         <StatCard
           label={t('lastPrice')}
-          icon={<TrendUpIcon size={15} />}
+          icon={lastTradeDirection === 'down' ? <TrendDownIcon size={15} /> : <TrendUpIcon size={15} />}
           value={formatCurrency(lastTradePrice)}
-          trend={{
-            label: '0%',
-            chart: <Sparkline points="0,12 12,12 24,12 36,12 48,12 60,12 72,12" />,
-          }}
+          trend={
+            lastTradeMoved
+              ? {
+                  label: lastTradeDirection === 'down' ? 'Down' : 'Up',
+                  tone: lastTradeDirection,
+                  icon:
+                    lastTradeDirection === 'down' ? (
+                      <TrendDownIcon size={22} />
+                    ) : (
+                      <TrendUpIcon size={22} />
+                    ),
+                }
+              : null
+          }
         />
 
         <StatCard

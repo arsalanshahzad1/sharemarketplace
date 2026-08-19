@@ -34,6 +34,8 @@ export function connectMarketplaceSocket({ onEvent } = {}) {
     "order.failed",
     "order.expired",
     "shares.transferred",
+    "market.stats.updated",
+    "portfolio.updated",
   ];
 
   events.forEach((eventName) => {

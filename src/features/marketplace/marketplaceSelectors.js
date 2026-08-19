@@ -29,30 +29,17 @@ export const selectAvailableShares = (state) =>
   Math.max(0, state.myShares - state.reserved);
 
 export const selectLastTradePrice = (state) =>
-  state.transactions.find((tx) => tx.status === TX_STATUS.DONE)?.price ??
-  state.listings[0]?.price ??
-  0;
+  Number(state.lastTradePrice || 0);
 
 export const selectEstimatedValue = (state) =>
-  state.myShares * selectLastTradePrice(state);
+  Number(state.myShares || 0) * Number(state.currentSharePrice || 0);
 
 export const selectVolume30d = (state) => {
-  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-
-  return state.transactions.reduce(
-    (acc, tx) => {
-      const time = new Date(tx.date).getTime();
-      if (!Number.isFinite(time) || time < cutoff) return acc;
-
-      const shares = Number(tx.qty || 0);
-      const price = Number(tx.price || 0);
-      return {
-        shares: acc.shares + shares,
-        value: acc.value + shares * price,
-      };
-    },
-    { shares: 0, value: 0 },
-  );
+  const shares = Number(state.volume30dShares || 0);
+  return {
+    shares,
+    value: state.volume30dValue ?? shares * Number(state.currentSharePrice || 0),
+  };
 };
 
 export const selectRecentActivity = (state) => {

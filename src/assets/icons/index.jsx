@@ -37,6 +37,13 @@ export const TrendUpIcon = (props) => (
   </Svg>
 );
 
+export const TrendDownIcon = (props) => (
+  <Svg {...props}>
+    <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+    <polyline points="16 17 22 17 22 11" />
+  </Svg>
+);
+
 export const TagIcon = (props) => (
   <Svg {...props}>
     <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />

@@ -6,6 +6,7 @@ import {
   transactionsFixture,
   notificationsFixture,
   portfolioFixture,
+  marketStatsFixture,
 } from "@/features/marketplace/marketplaceFixtures";
 
 export const marketplaceEndpoints = {
@@ -17,6 +18,7 @@ export const marketplaceEndpoints = {
           transactions: transactionsFixture,
           notifications: notificationsFixture,
           portfolio: portfolioFixture,
+          marketStats: marketStatsFixture,
         })
       : api.get("marketplace/bootstrap"),
 

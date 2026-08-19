@@ -59,6 +59,14 @@ export default function PageWrapper() {
           if (payload?.listing) marketplaceActions.upsertListing(payload.listing);
           return;
         }
+        if (eventName === "market.stats.updated") {
+          marketplaceActions.updateMarketStats(payload);
+          return;
+        }
+        if (eventName === "portfolio.updated") {
+          marketplaceActions.updatePortfolio(payload);
+          return;
+        }
         marketplaceActions.load({ force: true });
       },
     });
